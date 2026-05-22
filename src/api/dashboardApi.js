@@ -148,3 +148,11 @@ export const getFlatStatementExportUrl = (flatId) => {
 export const getAllFlatStatementsExportUrl = () => {
   return `${API.defaults.baseURL}/reports/payment-history/export`;
 };
+
+export const getExpensesExportUrl = () => {
+  return `${API.defaults.baseURL}/expenses/export`;
+};
+
+export const getMySite = () => {
+  return API.get("/sites/me");
+};
