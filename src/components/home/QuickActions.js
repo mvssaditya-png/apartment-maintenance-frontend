@@ -39,6 +39,10 @@ export default function QuickActions({ role, navigation }) {
   if (key === "defaulters") {
     navigation.navigate("Defaulters");
   }
+
+  if (key === "manageUsers") {
+    navigation.navigate("AdminUsers");
+  }
 };
   return (
     <View>
@@ -179,6 +183,13 @@ function getActionsByRole(role) {
       icon: "eye-outline",
       color: "#7C3AED",
       bg: "#F3E8FF",
+    },
+    {
+      key: "manageUsers",
+      label: "Manage\nUsers",
+      icon: "people-circle-outline",
+      color: "#2563EB",
+      bg: "#EEF5FF",
     },
   ];
 

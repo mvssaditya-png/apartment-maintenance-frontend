@@ -18,6 +18,7 @@ import ImagePreviewScreen from "../screens/ImagePreviewScreen";
 import DefaultersScreen from "../screens/DefaultersScreen";
 import RecordPaymentScreen from "../screens/RecordPaymentScreen";
 import PaymentHistoryScreen from "../screens/PaymentHistoryScreen";
+import AdminUsersScreen from "../screens/AdminUsersScreen";
 const Stack = createNativeStackNavigator();
 
 export default function AppNavigator() {
@@ -131,6 +132,15 @@ export default function AppNavigator() {
               options={{
                 headerShown: true,
                 title: "Payment History",
+                headerBackTitleVisible: false,
+              }}
+            />
+            <Stack.Screen
+              name="AdminUsers"
+              component={AdminUsersScreen}
+              options={{
+                headerShown: true,
+                title: "Manage Users",
                 headerBackTitleVisible: false,
               }}
             />

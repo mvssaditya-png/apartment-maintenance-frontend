@@ -52,9 +52,9 @@ export default function FlatSelector({ flats, selectedFlat, onSelectFlat }) {
         showsVerticalScrollIndicator={false}
         nestedScrollEnabled
         >
-        {filteredFlats.map((flat) => (
+        {filteredFlats.map((flat,index) => (
           <TouchableOpacity
-            key={flat.flatId}
+            key={`${flat.flatId}-${index}`}
             style={[
               styles.flatRow,
               selectedFlat?.flatId === flat.flatId && styles.flatRowActive,
