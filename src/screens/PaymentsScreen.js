@@ -57,7 +57,16 @@ export default function PaymentsScreen({ navigation }) {
           bg="#EAF8EE"
           onPress={() => navigation.navigate("SubmittedPayments")}
         />
-
+        {isAdmin && (
+          <PaymentCard
+            icon="calendar-outline"
+            title="Scheduled Payment Request"
+            subtitle="Automate monthly maintenance generation"
+            color="#7C3AED"
+            bg="#F3E8FF"
+            onPress={() => navigation.navigate("ScheduledPaymentRequests")}
+          />
+        )}
         {isAdmin && (
           <PaymentCard
             icon="document-text-outline"

@@ -19,6 +19,9 @@ import DefaultersScreen from "../screens/DefaultersScreen";
 import RecordPaymentScreen from "../screens/RecordPaymentScreen";
 import PaymentHistoryScreen from "../screens/PaymentHistoryScreen";
 import AdminUsersScreen from "../screens/AdminUsersScreen";
+import ScheduledPaymentRequestsScreen from "../screens/ScheduledPaymentRequestsScreen";
+import NoticesScreen from "../screens/NoticesScreen";
+import NotificationsScreen from "../screens/NotificationsScreen";
 const Stack = createNativeStackNavigator();
 
 export default function AppNavigator() {
@@ -141,6 +144,33 @@ export default function AppNavigator() {
               options={{
                 headerShown: true,
                 title: "Manage Users",
+                headerBackTitleVisible: false,
+              }}
+            />
+            <Stack.Screen
+              name="ScheduledPaymentRequests"
+              component={ScheduledPaymentRequestsScreen}
+              options={{
+                headerShown: true,
+                title: "Scheduled Payments",
+                headerBackTitleVisible: false,
+              }}
+            />
+            <Stack.Screen
+              name="Notices"
+              component={NoticesScreen}
+              options={{
+                headerShown: true,
+                title: "Notices",
+                headerBackTitleVisible: false,
+              }}
+            />
+            <Stack.Screen
+              name="Notifications"
+              component={NotificationsScreen}
+              options={{
+                headerShown: true,
+                title: "Notifications",
                 headerBackTitleVisible: false,
               }}
             />

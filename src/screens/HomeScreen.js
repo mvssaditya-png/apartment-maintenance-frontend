@@ -18,6 +18,7 @@ import {
   getMonthlySummary,
   getLoggedInUser,
   getSocietyBalance,
+  getUnreadNotificationCount,
 } from "../api/dashboardApi";
 
 import HomeHeader from "../components/home/HomeHeader";
@@ -31,6 +32,7 @@ export default function HomeScreen({ navigation }) {
   const [dashboard, setDashboard] = useState(null);
   const [balance, setBalance] = useState(null);
   const [summary, setSummary] = useState(null);
+  const [notificationCount, setNotificationCount] = useState(0);
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -68,11 +70,13 @@ export default function HomeScreen({ navigation }) {
         dashboardResult,
         balanceResult,
         summaryResult,
+        notificationResult,
       ] = await Promise.allSettled([
         getLoggedInUser(),
         getResidentDashboard(),
         getSocietyBalance(),
         getMonthlySummary(),
+        getUnreadNotificationCount(),
       ]);
 
       if (userResult.status === "fulfilled") {
@@ -97,6 +101,12 @@ export default function HomeScreen({ navigation }) {
         setSummary(summaryResult.value.data);
       } else {
         console.log("SUMMARY API ERROR:", summaryResult.reason);
+      }
+
+      if (notificationResult.status === "fulfilled") {
+        setNotificationCount(notificationResult.value.data || 0);
+      } else {
+        console.log("NOTIFICATION COUNT API ERROR:", notificationResult.reason);
       }
     } catch (error) {
       console.log("HOME LOAD ERROR:", error);
@@ -141,7 +151,12 @@ export default function HomeScreen({ navigation }) {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
-        <HomeHeader user={user} greeting={getGreeting()} />
+        <HomeHeader
+          user={user}
+          greeting={getGreeting()}
+          notificationCount={notificationCount}
+          onNotificationPress={() => navigation.navigate("Notifications")}
+        />
 
         <BalanceCard
           currentBalance={currentBalance}

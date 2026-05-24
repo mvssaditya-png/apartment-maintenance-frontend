@@ -43,6 +43,10 @@ export default function QuickActions({ role, navigation }) {
   if (key === "manageUsers") {
     navigation.navigate("AdminUsers");
   }
+
+  if (key === "notices") {
+  navigation.navigate("Notices");
+  }
 };
   return (
     <View>
@@ -94,6 +98,13 @@ function getActionsByRole(role) {
       color: "#7C3AED",
       bg: "#F3E8FF",
     },
+    {
+    key: "notices",
+    label: "Notices",
+    icon: "megaphone-outline",
+    color: "#2563EB",
+    bg: "#EEF4FF",
+    },
   ];
 
   const cashierActions = [
@@ -131,6 +142,13 @@ function getActionsByRole(role) {
       icon: "eye-outline",
       color: "#7C3AED",
       bg: "#F3E8FF",
+    },
+    {
+    key: "notices",
+    label: "Notices",
+    icon: "megaphone-outline",
+    color: "#2563EB",
+    bg: "#EEF4FF",
     },
   ];
 
@@ -191,6 +209,13 @@ function getActionsByRole(role) {
       color: "#2563EB",
       bg: "#EEF5FF",
     },
+    {
+    key: "notices",
+    label: "Notices",
+    icon: "megaphone-outline",
+    color: "#2563EB",
+    bg: "#EEF4FF",
+   },
   ];
 
   if (role === "ADMIN") {

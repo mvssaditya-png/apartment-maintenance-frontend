@@ -2,10 +2,15 @@ import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
-export default function HomeHeader({ user, greeting }) {
+export default function HomeHeader({
+  user,
+  greeting,
+  notificationCount = 0,
+  onNotificationPress,
+}) {
   return (
     <View style={styles.header}>
-      <View>
+      <View style={styles.leftSection}>
         <Text style={styles.greeting}>{greeting} 👋</Text>
 
         <Text style={styles.userName}>
@@ -20,12 +25,20 @@ export default function HomeHeader({ user, greeting }) {
         </Text>
       </View>
 
-      <TouchableOpacity style={styles.notificationButton}>
+      <TouchableOpacity
+        style={styles.notificationButton}
+        onPress={onNotificationPress}
+        activeOpacity={0.8}
+      >
         <Ionicons name="notifications-outline" size={24} color="#111827" />
 
-        <View style={styles.badge}>
-          <Text style={styles.badgeText}>3</Text>
-        </View>
+        {notificationCount > 0 && (
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>
+              {notificationCount > 99 ? "99+" : notificationCount}
+            </Text>
+          </View>
+        )}
       </TouchableOpacity>
     </View>
   );
@@ -37,6 +50,11 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 22,
+  },
+
+  leftSection: {
+    flex: 1,
+    paddingRight: 12,
   },
 
   greeting: {
@@ -73,19 +91,20 @@ const styles = StyleSheet.create({
 
   badge: {
     position: "absolute",
-    top: 5,
-    right: 6,
-    width: 18,
+    top: 3,
+    right: 3,
+    minWidth: 18,
     height: 18,
     borderRadius: 9,
     backgroundColor: "#EF4444",
     alignItems: "center",
     justifyContent: "center",
+    paddingHorizontal: 4,
   },
 
   badgeText: {
     color: "#FFFFFF",
-    fontSize: 11,
-    fontWeight: "700",
+    fontSize: 10,
+    fontWeight: "900",
   },
 });

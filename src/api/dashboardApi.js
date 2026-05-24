@@ -156,3 +156,43 @@ export const getExpensesExportUrl = () => {
 export const getMySite = () => {
   return API.get("/sites/me");
 };
+
+export const getScheduledPaymentRequests = () => {
+  return API.get("/scheduled-payment-requests");
+};
+
+export const createScheduledPaymentRequest = (payload) => {
+  return API.post("/scheduled-payment-requests", payload);
+};
+
+export const updateScheduledPaymentRequest = (scheduleId, payload) => {
+  return API.put(`/scheduled-payment-requests/${scheduleId}`, payload);
+};
+
+export const toggleScheduledPaymentRequest = (scheduleId) => {
+  return API.patch(`/scheduled-payment-requests/${scheduleId}/toggle`);
+};
+
+export const getNotices = () => {
+  return API.get("/notices");
+};
+
+export const createNotice = (payload) => {
+  return API.post("/notices", payload);
+};
+
+export const toggleNotice = (noticeId) => {
+  return API.patch(`/notices/${noticeId}/toggle`);
+};
+
+export const getMyNotifications = () => {
+  return API.get("/notifications/my");
+};
+
+export const markNotificationRead = (notificationId) => {
+  return API.put(`/notifications/${notificationId}/read`);
+};
+
+export const getUnreadNotificationCount = () => {
+  return API.get("/notifications/unread-count");
+};
