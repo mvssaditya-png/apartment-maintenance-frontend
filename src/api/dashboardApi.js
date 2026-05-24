@@ -196,3 +196,47 @@ export const markNotificationRead = (notificationId) => {
 export const getUnreadNotificationCount = () => {
   return API.get("/notifications/unread-count");
 };
+
+export const getEmergencyContacts = () => {
+return API.get("/emergency-contacts");
+};
+
+export const createEmergencyContact = (payload) => {
+return API.post("/emergency-contacts", payload);
+};
+
+export const updateEmergencyContact = (contactId, payload) => {
+return API.put(`/emergency-contacts/${contactId}`, payload);
+};
+
+export const toggleEmergencyContact = (contactId) => {
+return API.patch(`/emergency-contacts/${contactId}/toggle`);
+};
+
+export const getMeetings = () => {
+  return API.get("/meetings");
+};
+
+export const createMeeting = (payload) => {
+  return API.post("/meetings", payload);
+};
+
+export const updateMeeting = (meetingId, payload) => {
+  return API.put(`/meetings/${meetingId}`, payload);
+};
+
+export const toggleMeeting = (meetingId) => {
+  return API.patch(`/meetings/${meetingId}/toggle`);
+};
+
+export const getComplaints = () => {
+  return API.get("/complaints");
+};
+
+export const createComplaint = (payload) => {
+  return API.post("/complaints", payload);
+};
+
+export const updateComplaintStatus = (complaintId, payload) => {
+  return API.patch(`/complaints/${complaintId}/status`, payload);
+};

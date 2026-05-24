@@ -22,6 +22,9 @@ import AdminUsersScreen from "../screens/AdminUsersScreen";
 import ScheduledPaymentRequestsScreen from "../screens/ScheduledPaymentRequestsScreen";
 import NoticesScreen from "../screens/NoticesScreen";
 import NotificationsScreen from "../screens/NotificationsScreen";
+import SOSScreen from "../screens/SOSScreen";
+import MeetingsScreen from "../screens/MeetingsScreen";
+import ComplaintsScreen from "../screens/ComplaintsScreen";
 const Stack = createNativeStackNavigator();
 
 export default function AppNavigator() {
@@ -171,6 +174,33 @@ export default function AppNavigator() {
               options={{
                 headerShown: true,
                 title: "Notifications",
+                headerBackTitleVisible: false,
+              }}
+            />
+            <Stack.Screen
+              name="SOS"
+              component={SOSScreen}
+              options={{
+              headerShown: true,
+              title: "SOS Emergency",
+              headerBackTitleVisible: false,
+              }}
+            />
+            <Stack.Screen
+              name="Meetings"
+              component={MeetingsScreen}
+              options={{
+                headerShown: true,
+                title: "Meetings",
+                headerBackTitleVisible: false,
+              }}
+            />
+            <Stack.Screen
+              name="Complaints"
+              component={ComplaintsScreen}
+              options={{
+                headerShown: true,
+                title: "Complaints",
                 headerBackTitleVisible: false,
               }}
             />

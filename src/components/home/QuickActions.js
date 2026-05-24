@@ -47,6 +47,18 @@ export default function QuickActions({ role, navigation }) {
   if (key === "notices") {
   navigation.navigate("Notices");
   }
+
+  if (key === "sos") {
+  navigation.navigate("SOS");
+  }
+
+  if (key === "meetings") {
+    navigation.navigate("Meetings");
+  }
+
+  if (key === "complaints") {
+    navigation.navigate("Complaints");
+  }
 };
   return (
     <View>
@@ -105,6 +117,27 @@ function getActionsByRole(role) {
     color: "#2563EB",
     bg: "#EEF4FF",
     },
+    {
+    key: "sos",
+    label: "SOS",
+    icon: "alert-circle-outline",
+    color: "#DC2626",
+    bg: "#FEF2F2",
+    },
+    {
+      key: "meetings",
+      label: "Meetings",
+      icon: "people-outline",
+      color: "#2563EB",
+      bg: "#EEF4FF",
+    },
+    {
+      key: "complaints",
+      label: "Complaints",
+      icon: "chatbox-ellipses-outline",
+      color: "#2563EB",
+      bg: "#EEF4FF",
+    },
   ];
 
   const cashierActions = [
@@ -149,6 +182,27 @@ function getActionsByRole(role) {
     icon: "megaphone-outline",
     color: "#2563EB",
     bg: "#EEF4FF",
+    },
+    {
+    key: "sos",
+    label: "SOS",
+    icon: "alert-circle-outline",
+    color: "#DC2626",
+    bg: "#FEF2F2",
+    },
+    {
+      key: "meetings",
+      label: "Meetings",
+      icon: "people-outline",
+      color: "#2563EB",
+      bg: "#EEF4FF",
+    },
+    {
+      key: "complaints",
+      label: "Complaints",
+      icon: "chatbox-ellipses-outline",
+      color: "#2563EB",
+      bg: "#EEF4FF",
     },
   ];
 
@@ -215,7 +269,28 @@ function getActionsByRole(role) {
     icon: "megaphone-outline",
     color: "#2563EB",
     bg: "#EEF4FF",
-   },
+    },
+    {
+    key: "sos",
+    label: "SOS",
+    icon: "alert-circle-outline",
+    color: "#DC2626",
+    bg: "#FEF2F2",
+    },
+    {
+      key: "meetings",
+      label: "Meetings",
+      icon: "people-outline",
+      color: "#2563EB",
+      bg: "#EEF4FF",
+    },
+    {
+      key: "complaints",
+      label: "Complaints",
+      icon: "chatbox-ellipses-outline",
+      color: "#2563EB",
+      bg: "#EEF4FF",
+    },
   ];
 
   if (role === "ADMIN") {
