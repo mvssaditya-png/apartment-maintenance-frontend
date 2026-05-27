@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+
 import {
   View,
   Text,
@@ -7,40 +8,66 @@ import {
   ActivityIndicator,
   Alert,
   ScrollView,
-  Image,
 } from "react-native";
+
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
-import ImagePreviewModal from "../components/common/ImagePreviewModal";
 import { Ionicons } from "@expo/vector-icons";
+
+import ImagePreviewModal from "../components/common/ImagePreviewModal";
+
+import AppCard from "../components/common/AppCard";
+import AppButton from "../components/common/AppButton";
+import { COLORS } from "../components/common/theme";
 
 import {
   submitPayment,
   uploadReceiptImage,
 } from "../api/dashboardApi";
 
-const PAYMENT_MODES = ["UPI", "BANK_TRANSFER", "CASH", "CHEQUE"];
+const PAYMENT_MODES = [
+  "UPI",
+  "BANK_TRANSFER",
+  "CASH",
+  "CHEQUE",
+];
 
-export default function SubmitPaymentScreen({ route, navigation }) {
+export default function SubmitPaymentScreen({
+  route,
+  navigation,
+}) {
   const { payment } = route.params;
 
-  const [paymentMode, setPaymentMode] = useState("UPI");
-  const [selectedImage, setSelectedImage] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [previewImageUrl, setPreviewImageUrl] = useState(null);
+  const [paymentMode, setPaymentMode] =
+    useState("UPI");
+
+  const [selectedImage, setSelectedImage] =
+    useState(null);
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const [previewImageUrl, setPreviewImageUrl] =
+    useState(null);
+
   const pickImage = async () => {
     const permission =
       await ImagePicker.requestMediaLibraryPermissionsAsync();
 
     if (!permission.granted) {
-      Alert.alert("Permission Required", "Please allow gallery access.");
+      Alert.alert(
+        "Permission Required",
+        "Please allow gallery access."
+      );
       return;
     }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.8,
-    });
+    const result =
+      await ImagePicker.launchImageLibraryAsync({
+        mediaTypes:
+          ImagePicker.MediaTypeOptions.Images,
+        quality: 0.8,
+      });
 
     if (!result.canceled) {
       setSelectedImage(result.assets[0]);
@@ -49,16 +76,23 @@ export default function SubmitPaymentScreen({ route, navigation }) {
 
   const handleSubmit = async () => {
     if (!selectedImage) {
-      Alert.alert("Receipt Required", "Please upload payment screenshot.");
+      Alert.alert(
+        "Receipt Required",
+        "Please upload payment screenshot."
+      );
       return;
     }
 
     try {
       setLoading(true);
 
-      const uploadRes = await uploadReceiptImage(selectedImage);
+      const uploadRes =
+        await uploadReceiptImage(
+          selectedImage
+        );
 
-      const receiptUrl = uploadRes.data.fileUrl;
+      const receiptUrl =
+        uploadRes.data.fileUrl;
 
       await submitPayment({
         paymentId: payment.paymentId,
@@ -66,33 +100,83 @@ export default function SubmitPaymentScreen({ route, navigation }) {
         receiptUrl,
       });
 
-      Alert.alert("Success", "Payment submitted successfully.", [
-        {
-          text: "OK",
-          onPress: () => navigation.goBack(),
-        },
-      ]);
+      Alert.alert(
+        "Success",
+        "Payment submitted successfully.",
+        [
+          {
+            text: "OK",
+            onPress: () =>
+              navigation.goBack(),
+          },
+        ]
+      );
     } catch (error) {
-      console.log("SUBMIT PAYMENT ERROR:", error?.response?.data || error);
-      Alert.alert("Error", "Unable to submit payment.");
+      console.log(
+        "SUBMIT PAYMENT ERROR:",
+        error?.response?.data || error
+      );
+
+      Alert.alert(
+        "Error",
+        "Unable to submit payment."
+      );
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={["bottom"]}>
-      <ScrollView contentContainerStyle={styles.container}>
-        <View style={styles.summaryCard}>
-          <Text style={styles.summaryLabel}>Payment Amount</Text>
-          <Text style={styles.amount}>₹{formatAmount(payment.amount)}</Text>
-          <Text style={styles.detailText}>
-            {payment.requestType} • {getMonthName(payment.paymentMonth)}{" "}
-            {payment.paymentYear}
-          </Text>
-        </View>
+    <SafeAreaView
+      style={styles.safeArea}
+      edges={["bottom"]}
+    >
+      <ScrollView
+        contentContainerStyle={
+          styles.container
+        }
+        showsVerticalScrollIndicator={
+          false
+        }
+      >
+        <AppCard style={styles.summaryCard}>
+          <View style={styles.summaryTopRow}>
+            <View style={styles.summaryContent}>
+              <Text style={styles.summaryLabel}>
+                Payment Amount
+              </Text>
 
-        <Text style={styles.sectionTitle}>Payment Mode</Text>
+              <Text style={styles.amount}>
+                ₹
+                {formatAmount(
+                  payment.amount
+                )}
+              </Text>
+
+              <Text style={styles.detailText}>
+                {payment.requestType} •{" "}
+                {getMonthName(
+                  payment.paymentMonth
+                )}{" "}
+                {payment.paymentYear}
+              </Text>
+            </View>
+
+            <View
+              style={styles.summaryIconBox}
+            >
+              <Ionicons
+                name="wallet-outline"
+                size={30}
+                color="#FFFFFF"
+              />
+            </View>
+          </View>
+        </AppCard>
+
+        <Text style={styles.sectionTitle}>
+          Payment Mode
+        </Text>
 
         <View style={styles.modeGrid}>
           {PAYMENT_MODES.map((mode) => (
@@ -100,14 +184,39 @@ export default function SubmitPaymentScreen({ route, navigation }) {
               key={mode}
               style={[
                 styles.modeButton,
-                paymentMode === mode && styles.modeButtonActive,
+                paymentMode === mode &&
+                  styles.modeButtonActive,
               ]}
-              onPress={() => setPaymentMode(mode)}
+              onPress={() =>
+                setPaymentMode(mode)
+              }
+              activeOpacity={0.85}
             >
+              <View
+                style={[
+                  styles.modeIconBox,
+                  paymentMode === mode &&
+                    styles.modeIconBoxActive,
+                ]}
+              >
+                <Ionicons
+                  name={getPaymentModeIcon(
+                    mode
+                  )}
+                  size={22}
+                  color={
+                    paymentMode === mode
+                      ? "#FFFFFF"
+                      : COLORS.primary
+                  }
+                />
+              </View>
+
               <Text
                 style={[
                   styles.modeText,
-                  paymentMode === mode && styles.modeTextActive,
+                  paymentMode === mode &&
+                    styles.modeTextActive,
                 ]}
               >
                 {formatMode(mode)}
@@ -116,75 +225,112 @@ export default function SubmitPaymentScreen({ route, navigation }) {
           ))}
         </View>
 
-        <View style={styles.card}>
-          <Text style={styles.label}>Payment Screenshot</Text>
+        <AppCard style={styles.card}>
+          <Text style={styles.label}>
+            Payment Screenshot
+          </Text>
 
           <TouchableOpacity
             style={styles.uploadBox}
             onPress={() => {
               if (selectedImage) {
-                setPreviewImageUrl(selectedImage.uri);
+                setPreviewImageUrl(
+                  selectedImage.uri
+                );
               } else {
                 pickImage();
               }
             }}
+            activeOpacity={0.85}
           >
-
             {selectedImage ? (
               <>
                 <Ionicons
                   name="image-outline"
-                  size={34}
-                  color="#2563EB"
+                  size={38}
+                  color={COLORS.primary}
                 />
 
-                <Text style={styles.uploadTitle}>
+                <Text
+                  style={
+                    styles.uploadTitle
+                  }
+                >
                   Receipt Selected
                 </Text>
 
-                <Text style={styles.uploadText}>
+                <Text
+                  style={
+                    styles.uploadText
+                  }
+                >
                   Tap to preview image
                 </Text>
               </>
             ) : (
               <>
-                <Text style={styles.uploadTitle}>
+                <View
+                  style={
+                    styles.uploadIconCircle
+                  }
+                >
+                  <Ionicons
+                    name="cloud-upload-outline"
+                    size={36}
+                    color={
+                      COLORS.primary
+                    }
+                  />
+                </View>
+
+                <Text
+                  style={
+                    styles.uploadTitle
+                  }
+                >
                   Upload Screenshot
                 </Text>
 
-                <Text style={styles.uploadText}>
-                  Select payment receipt from gallery
+                <Text
+                  style={
+                    styles.uploadText
+                  }
+                >
+                  Select payment receipt
+                  from gallery
                 </Text>
               </>
             )}
-
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.button}
+          <AppButton
+            title="Submit Payment"
             onPress={handleSubmit}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="#FFFFFF" />
-            ) : (
-              <Text style={styles.buttonText}>Submit Payment</Text>
-            )}
-          </TouchableOpacity>
-        </View>
+            loading={loading}
+            style={styles.submitButton}
+          />
+        </AppCard>
+
+        <View style={{ height: 30 }} />
       </ScrollView>
+
       <ImagePreviewModal
-  visible={!!previewImageUrl}
-  imageUrl={previewImageUrl}
-  onClose={() => setPreviewImageUrl(null)}
-/>
+        visible={!!previewImageUrl}
+        imageUrl={previewImageUrl}
+        onClose={() =>
+          setPreviewImageUrl(null)
+        }
+      />
     </SafeAreaView>
   );
 }
 
 function formatAmount(value) {
   if (!value) return "0";
-  return Number(value).toLocaleString("en-IN");
+
+  return Number(value).toLocaleString(
+    "en-IN"
+  );
 }
 
 function getMonthName(monthNumber) {
@@ -203,18 +349,44 @@ function getMonthName(monthNumber) {
     "Nov",
     "Dec",
   ];
-  return months[Number(monthNumber)] || "-";
+
+  return (
+    months[Number(monthNumber)] || "-"
+  );
 }
 
 function formatMode(mode) {
-  if (mode === "BANK_TRANSFER") return "Bank Transfer";
+  if (mode === "BANK_TRANSFER") {
+    return "Bank Transfer";
+  }
+
   return mode;
+}
+
+function getPaymentModeIcon(mode) {
+  switch (mode) {
+    case "UPI":
+      return "phone-portrait-outline";
+
+    case "BANK_TRANSFER":
+      return "business-outline";
+
+    case "CASH":
+      return "cash-outline";
+
+    case "CHEQUE":
+      return "document-text-outline";
+
+    default:
+      return "wallet-outline";
+  }
 }
 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#F5F7FB",
+    backgroundColor:
+      COLORS.background,
   },
 
   container: {
@@ -223,10 +395,23 @@ const styles = StyleSheet.create({
   },
 
   summaryCard: {
-    backgroundColor: "#2563EB",
-    borderRadius: 22,
-    padding: 20,
+    backgroundColor:
+      COLORS.primary,
+    borderWidth: 0,
     marginBottom: 24,
+    borderRadius: 26,
+  },
+
+  summaryTopRow: {
+    flexDirection: "row",
+    justifyContent:
+      "space-between",
+    alignItems: "center",
+  },
+
+  summaryContent: {
+    flex: 1,
+    paddingRight: 14,
   },
 
   summaryLabel: {
@@ -237,7 +422,7 @@ const styles = StyleSheet.create({
 
   amount: {
     color: "#FFFFFF",
-    fontSize: 36,
+    fontSize: 38,
     fontWeight: "900",
     marginTop: 6,
   },
@@ -249,38 +434,66 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 
+  summaryIconBox: {
+    width: 66,
+    height: 66,
+    borderRadius: 22,
+    backgroundColor:
+      "rgba(255,255,255,0.18)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 21,
     fontWeight: "900",
-    color: "#111827",
+    color: COLORS.text,
     marginBottom: 14,
   },
 
   modeGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    justifyContent: "space-between",
+    justifyContent:
+      "space-between",
     marginBottom: 20,
   },
 
   modeButton: {
     width: "48%",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 14,
-    paddingVertical: 14,
+    backgroundColor:
+      COLORS.white,
+    borderRadius: 18,
+    paddingVertical: 18,
     alignItems: "center",
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: "#D1D5DB",
+    borderColor: "#E5E7EB",
   },
 
   modeButtonActive: {
-    backgroundColor: "#2563EB",
-    borderColor: "#2563EB",
+    backgroundColor:
+      COLORS.primary,
+    borderColor: COLORS.primary,
+  },
+
+  modeIconBox: {
+    width: 48,
+    height: 48,
+    borderRadius: 17,
+    backgroundColor: "#EEF5FF",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 10,
+  },
+
+  modeIconBoxActive: {
+    backgroundColor:
+      "rgba(255,255,255,0.18)",
   },
 
   modeText: {
-    color: "#374151",
+    color: COLORS.textSecondary,
     fontWeight: "800",
     fontSize: 14,
   },
@@ -290,59 +503,54 @@ const styles = StyleSheet.create({
   },
 
   card: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 18,
-    padding: 18,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
+    borderRadius: 22,
   },
 
   label: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#374151",
-    marginBottom: 10,
+    fontSize: 15,
+    fontWeight: "800",
+    color: COLORS.textSecondary,
+    marginBottom: 12,
   },
 
   uploadBox: {
-    height: 210,
-    borderRadius: 16,
-    borderWidth: 1,
+    height: 220,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderStyle: "dashed",
     borderColor: "#D1D5DB",
-    backgroundColor: "#F9FAFB",
+    backgroundColor: "#FAFBFF",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 18,
     overflow: "hidden",
   },
 
-  previewImage: {
-    width: "100%",
-    height: "100%",
+  uploadIconCircle: {
+    width: 74,
+    height: 74,
+    borderRadius: 26,
+    backgroundColor: "#EEF5FF",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 16,
   },
 
   uploadTitle: {
-    fontSize: 16,
-    fontWeight: "800",
-    color: "#111827",
+    fontSize: 17,
+    fontWeight: "900",
+    color: COLORS.text,
   },
 
   uploadText: {
     fontSize: 13,
-    color: "#6B7280",
+    color: COLORS.textMuted,
     marginTop: 6,
+    fontWeight: "600",
+    textAlign: "center",
   },
 
-  button: {
-    backgroundColor: "#2563EB",
-    paddingVertical: 15,
-    borderRadius: 14,
-    alignItems: "center",
-  },
-
-  buttonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "800",
+  submitButton: {
+    marginTop: 4,
   },
 });

@@ -1,24 +1,31 @@
 import React, { useState } from "react";
+
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
   Alert,
   ScrollView,
-  Image,
 } from "react-native";
+
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
-import ImagePreviewModal from "../components/common/ImagePreviewModal";
 import { Ionicons } from "@expo/vector-icons";
+
+import ImagePreviewModal from "../components/common/ImagePreviewModal";
 
 import {
   addExpense,
   uploadReceiptImage,
 } from "../api/dashboardApi";
+
+import AppCard from "../components/common/AppCard";
+import AppButton from "../components/common/AppButton";
+import AppInput from "../components/common/AppInput";
+
+import { COLORS } from "../components/common/theme";
 
 const EXPENSE_CATEGORIES = [
   "MAINTENANCE",
@@ -32,26 +39,39 @@ const EXPENSE_CATEGORIES = [
 
 export default function AddExpenseScreen({ navigation }) {
   const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
+  const [description, setDescription] =
+    useState("");
   const [amount, setAmount] = useState("");
-  const [expenseDate, setExpenseDate] = useState("");
-  const [category, setCategory] = useState("MAINTENANCE");
-  const [selectedImage, setSelectedImage] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [previewImageUrl, setPreviewImageUrl] = useState(null);
+  const [expenseDate, setExpenseDate] =
+    useState("");
+  const [category, setCategory] =
+    useState("MAINTENANCE");
+
+  const [selectedImage, setSelectedImage] =
+    useState(null);
+  const [loading, setLoading] =
+    useState(false);
+  const [previewImageUrl, setPreviewImageUrl] =
+    useState(null);
+
   const pickImage = async () => {
     const permission =
       await ImagePicker.requestMediaLibraryPermissionsAsync();
 
     if (!permission.granted) {
-      Alert.alert("Permission Required", "Please allow gallery access.");
+      Alert.alert(
+        "Permission Required",
+        "Please allow gallery access."
+      );
       return;
     }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.8,
-    });
+    const result =
+      await ImagePicker.launchImageLibraryAsync({
+        mediaTypes:
+          ImagePicker.MediaTypeOptions.Images,
+        quality: 0.8,
+      });
 
     if (!result.canceled) {
       setSelectedImage(result.assets[0]);
@@ -60,17 +80,26 @@ export default function AddExpenseScreen({ navigation }) {
 
   const handleSubmit = async () => {
     if (!title.trim()) {
-      Alert.alert("Validation Error", "Please enter expense title.");
+      Alert.alert(
+        "Validation Error",
+        "Please enter expense title."
+      );
       return;
     }
 
     if (!amount || Number(amount) <= 0) {
-      Alert.alert("Validation Error", "Please enter valid amount.");
+      Alert.alert(
+        "Validation Error",
+        "Please enter valid amount."
+      );
       return;
     }
 
     if (!expenseDate.trim()) {
-      Alert.alert("Validation Error", "Please enter expense date.");
+      Alert.alert(
+        "Validation Error",
+        "Please enter expense date."
+      );
       return;
     }
 
@@ -80,96 +109,141 @@ export default function AddExpenseScreen({ navigation }) {
       let receiptUrl = "";
 
       if (selectedImage) {
-        const uploadRes = await uploadReceiptImage(selectedImage);
-        receiptUrl = uploadRes.data.fileUrl;
+        const uploadRes =
+          await uploadReceiptImage(
+            selectedImage
+          );
+
+        receiptUrl =
+          uploadRes.data.fileUrl;
       }
 
       await addExpense({
         title: title.trim(),
-        description: description.trim(),
+        description:
+          description.trim(),
         amount: Number(amount),
-        expenseDate: expenseDate.trim(),
+        expenseDate:
+          expenseDate.trim(),
         category,
         receiptUrl,
       });
 
-      Alert.alert("Success", "Expense added successfully.", [
-        {
-          text: "OK",
-          onPress: () => navigation.goBack(),
-        },
-      ]);
+      Alert.alert(
+        "Success",
+        "Expense added successfully.",
+        [
+          {
+            text: "OK",
+            onPress: () =>
+              navigation.goBack(),
+          },
+        ]
+      );
     } catch (error) {
-      console.log("ADD EXPENSE ERROR:", error?.response?.data || error);
-      Alert.alert("Error", "Unable to add expense.");
+      console.log(
+        "ADD EXPENSE ERROR:",
+        error?.response?.data || error
+      );
+
+      Alert.alert(
+        "Error",
+        "Unable to add expense."
+      );
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={["bottom"]}>
+    <SafeAreaView
+      style={styles.safeArea}
+      edges={["bottom"]}
+    >
       <ScrollView
-        contentContainerStyle={styles.container}
-        showsVerticalScrollIndicator={false}
+        contentContainerStyle={
+          styles.container
+        }
+        showsVerticalScrollIndicator={
+          false
+        }
       >
-        <Text style={styles.title}>Add Expense</Text>
+        <View style={styles.headerCard}>
+          <Ionicons
+            name="add-circle-outline"
+            size={42}
+            color="#FFFFFF"
+          />
 
-        <Text style={styles.subtitle}>
-          Record society expenses such as repairs, cleaning, electricity, water,
-          or maintenance work.
-        </Text>
+          <Text style={styles.title}>
+            Add Expense
+          </Text>
 
-        <View style={styles.card}>
-          <FieldLabel label="Expense Title" />
-          <TextInput
-            style={styles.input}
+          <Text style={styles.subtitle}>
+            Record society expenses such as
+            repairs, cleaning, electricity,
+            water or maintenance work.
+          </Text>
+        </View>
+
+        <AppCard style={styles.card}>
+          <AppInput
+            label="Expense Title"
             placeholder="Example: Generator Repair"
             value={title}
             onChangeText={setTitle}
           />
 
-          <FieldLabel label="Description" />
-          <TextInput
-            style={[styles.input, styles.multiInput]}
+          <AppInput
+            label="Description"
             placeholder="Example: Motor replacement"
             value={description}
             onChangeText={setDescription}
             multiline
           />
 
-          <FieldLabel label="Amount" />
-          <TextInput
-            style={styles.input}
+          <AppInput
+            label="Amount"
             placeholder="Example: 5000"
             keyboardType="numeric"
             value={amount}
-            onChangeText={(text) => setAmount(text.replace(/[^0-9.]/g, ""))}
+            onChangeText={(text) =>
+              setAmount(
+                text.replace(/[^0-9.]/g, "")
+              )
+            }
           />
 
-          <FieldLabel label="Expense Date" />
-          <TextInput
-            style={styles.input}
+          <AppInput
+            label="Expense Date"
             placeholder="YYYY-MM-DD"
             value={expenseDate}
             onChangeText={setExpenseDate}
           />
 
-          <FieldLabel label="Category" />
+          <Text style={styles.label}>
+            Category
+          </Text>
+
           <View style={styles.categoryGrid}>
             {EXPENSE_CATEGORIES.map((item) => (
               <TouchableOpacity
                 key={item}
                 style={[
                   styles.categoryButton,
-                  category === item && styles.categoryButtonActive,
+                  category === item &&
+                    styles.categoryButtonActive,
                 ]}
-                onPress={() => setCategory(item)}
+                onPress={() =>
+                  setCategory(item)
+                }
+                activeOpacity={0.85}
               >
                 <Text
                   style={[
                     styles.categoryText,
-                    category === item && styles.categoryTextActive,
+                    category === item &&
+                      styles.categoryTextActive,
                   ]}
                 >
                   {formatCategory(item)}
@@ -178,82 +252,91 @@ export default function AddExpenseScreen({ navigation }) {
             ))}
           </View>
 
-          <FieldLabel label="Receipt Image (Optional)" />
-           <TouchableOpacity
-            style={styles.uploadBox}
-            onPress={() => {
-                if (selectedImage) {
-                setPreviewImageUrl(selectedImage.uri);
-                } else {
-                pickImage();
-                }
-            }}
-            >
-
-            {selectedImage ? (
-                <>
-                <Ionicons
-                    name="image-outline"
-                    size={34}
-                    color="#2563EB"
-                />
-
-                <Text style={styles.uploadTitle}>
-                    Receipt Selected
-                </Text>
-
-                <Text style={styles.uploadText}>
-                    Tap to preview image
-                </Text>
-                </>
-            ) : (
-                <>
-                <Text style={styles.uploadTitle}>
-                    Upload Receipt
-                </Text>
-
-                <Text style={styles.uploadText}>
-                    Select receipt image from gallery
-                </Text>
-                </>
-            )}
-
-          </TouchableOpacity>
+          <Text style={styles.label}>
+            Receipt Image Optional
+          </Text>
 
           <TouchableOpacity
-            style={styles.button}
-            onPress={handleSubmit}
-            disabled={loading}
+            style={styles.uploadBox}
+            onPress={() => {
+              if (selectedImage) {
+                setPreviewImageUrl(
+                  selectedImage.uri
+                );
+              } else {
+                pickImage();
+              }
+            }}
+            activeOpacity={0.85}
           >
-            {loading ? (
-              <ActivityIndicator color="#FFFFFF" />
-            ) : (
-              <Text style={styles.buttonText}>Add Expense</Text>
-            )}
+            <View style={styles.uploadIconCircle}>
+              <Ionicons
+                name={
+                  selectedImage
+                    ? "image-outline"
+                    : "cloud-upload-outline"
+                }
+                size={36}
+                color={COLORS.primary}
+              />
+            </View>
+
+            <Text style={styles.uploadTitle}>
+              {selectedImage
+                ? "Receipt Selected"
+                : "Upload Receipt"}
+            </Text>
+
+            <Text style={styles.uploadText}>
+              {selectedImage
+                ? "Tap to preview image"
+                : "Select receipt image from gallery"}
+            </Text>
           </TouchableOpacity>
-        </View>
+
+          {selectedImage ? (
+            <AppButton
+              title="Change Receipt"
+              variant="secondary"
+              onPress={pickImage}
+              style={styles.changeButton}
+            />
+          ) : null}
+
+          <AppButton
+            title="Add Expense"
+            onPress={handleSubmit}
+            loading={loading}
+          />
+        </AppCard>
       </ScrollView>
+
       <ImagePreviewModal
-  visible={!!previewImageUrl}
-  imageUrl={previewImageUrl}
-  onClose={() => setPreviewImageUrl(null)}
-/>
+        visible={!!previewImageUrl}
+        imageUrl={previewImageUrl}
+        onClose={() =>
+          setPreviewImageUrl(null)
+        }
+      />
     </SafeAreaView>
   );
 }
 
-function FieldLabel({ label }) {
-  return <Text style={styles.label}>{label}</Text>;
-}
-
 function formatCategory(value) {
-  return value.charAt(0) + value.slice(1).toLowerCase();
+  if (!value) return "-";
+
+  return value
+    .toLowerCase()
+    .replace(/\b\w/g, (char) =>
+      char.toUpperCase()
+    );
 }
 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#F5F7FB",
+    backgroundColor:
+      COLORS.background,
   },
 
   container: {
@@ -261,61 +344,49 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
 
+  headerCard: {
+    backgroundColor: "#DC2626",
+    borderRadius: 28,
+    padding: 24,
+    marginBottom: 24,
+  },
+
   title: {
-    fontSize: 28,
+    fontSize: 30,
     fontWeight: "900",
-    color: "#111827",
-    marginTop: 8,
+    color: "#FFFFFF",
+    marginTop: 10,
   },
 
   subtitle: {
-    fontSize: 15,
-    color: "#6B7280",
-    marginTop: 8,
-    marginBottom: 24,
-    lineHeight: 22,
+    fontSize: 14,
+    color: "#FEE2E2",
+    marginTop: 6,
+    lineHeight: 21,
+    fontWeight: "600",
   },
 
   card: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 18,
-    padding: 18,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
+    borderRadius: 24,
   },
 
   label: {
     fontSize: 14,
-    fontWeight: "700",
-    color: "#374151",
-    marginBottom: 8,
-  },
-
-  input: {
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
-    borderRadius: 14,
-    padding: 14,
-    fontSize: 16,
-    backgroundColor: "#F9FAFB",
-    marginBottom: 16,
-  },
-
-  multiInput: {
-    minHeight: 80,
-    textAlignVertical: "top",
+    fontWeight: "800",
+    color: COLORS.textSecondary,
+    marginBottom: 10,
   },
 
   categoryGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    marginBottom: 16,
+    marginBottom: 18,
   },
 
   categoryButton: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 13,
     paddingVertical: 10,
-    borderRadius: 12,
+    borderRadius: 14,
     backgroundColor: "#F9FAFB",
     borderWidth: 1,
     borderColor: "#D1D5DB",
@@ -324,12 +395,12 @@ const styles = StyleSheet.create({
   },
 
   categoryButtonActive: {
-    backgroundColor: "#2563EB",
-    borderColor: "#2563EB",
+    backgroundColor: COLORS.primary,
+    borderColor: COLORS.primary,
   },
 
   categoryText: {
-    color: "#374151",
+    color: COLORS.textSecondary,
     fontWeight: "800",
     fontSize: 13,
   },
@@ -339,44 +410,42 @@ const styles = StyleSheet.create({
   },
 
   uploadBox: {
-    height: 210,
-    borderRadius: 16,
-    borderWidth: 1,
+    height: 220,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderStyle: "dashed",
     borderColor: "#D1D5DB",
-    backgroundColor: "#F9FAFB",
+    backgroundColor: "#FAFBFF",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 18,
-    overflow: "hidden",
   },
 
-  previewImage: {
-    width: "100%",
-    height: "100%",
+  uploadIconCircle: {
+    width: 74,
+    height: 74,
+    borderRadius: 26,
+    backgroundColor: "#EEF5FF",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 14,
   },
 
   uploadTitle: {
-    fontSize: 16,
-    fontWeight: "800",
-    color: "#111827",
+    fontSize: 17,
+    fontWeight: "900",
+    color: COLORS.text,
   },
 
   uploadText: {
     fontSize: 13,
-    color: "#6B7280",
+    color: COLORS.textMuted,
     marginTop: 6,
+    fontWeight: "600",
+    textAlign: "center",
   },
 
-  button: {
-    backgroundColor: "#2563EB",
-    paddingVertical: 15,
-    borderRadius: 14,
-    alignItems: "center",
-  },
-
-  buttonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "800",
+  changeButton: {
+    marginBottom: 14,
   },
 });

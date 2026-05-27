@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from "react";
+
 import {
   View,
   Text,
@@ -6,13 +7,19 @@ import {
   StyleSheet,
   ActivityIndicator,
   RefreshControl,
-  TouchableOpacity,
 } from "react-native";
+
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 
 import { getMyDues } from "../api/dashboardApi";
+
+import AppCard from "../components/common/AppCard";
+import AppButton from "../components/common/AppButton";
+import EmptyState from "../components/common/EmptyState";
+import StatusBadge from "../components/common/StatusBadge";
+import { COLORS } from "../components/common/theme";
 
 export default function MyDuesScreen({ navigation }) {
   const [dues, setDues] = useState([]);
@@ -30,7 +37,6 @@ export default function MyDuesScreen({ navigation }) {
       setLoading(true);
 
       const response = await getMyDues();
-
       setDues(response.data || []);
     } catch (error) {
       console.log("MY DUES ERROR:", error?.response?.data || error);
@@ -49,11 +55,17 @@ export default function MyDuesScreen({ navigation }) {
     .filter((item) => item.paymentStatus !== "PAID")
     .reduce((sum, item) => sum + Number(item.amount || 0), 0);
 
+  const pendingCount = dues.filter(
+    (item) =>
+      item.paymentStatus === "PENDING" ||
+      item.paymentStatus === "REJECTED"
+  ).length;
+
   if (loading) {
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.loaderContainer}>
-          <ActivityIndicator size="large" color="#2563EB" />
+          <ActivityIndicator size="large" color={COLORS.primary} />
           <Text style={styles.loaderText}>Loading dues...</Text>
         </View>
       </SafeAreaView>
@@ -66,27 +78,54 @@ export default function MyDuesScreen({ navigation }) {
         contentContainerStyle={styles.container}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[COLORS.primary]}
+            tintColor={COLORS.primary}
+          />
         }
       >
         <View style={styles.summaryCard}>
-          <Text style={styles.summaryLabel}>Total Pending Due</Text>
-          <Text style={styles.summaryAmount}>₹{formatAmount(totalPending)}</Text>
-          <Text style={styles.summarySubText}>
-            Includes maintenance and special requests
-          </Text>
+          <View style={styles.summaryTop}>
+            <View>
+              <Text style={styles.summaryLabel}>Total Pending Due</Text>
+              <Text style={styles.summaryAmount}>
+                ₹{formatAmount(totalPending)}
+              </Text>
+            </View>
+
+            <View style={styles.summaryIconBox}>
+              <Ionicons name="wallet-outline" size={30} color={COLORS.white} />
+            </View>
+          </View>
+
+          <View style={styles.summaryFooter}>
+            <Text style={styles.summarySubText}>
+              Includes maintenance and special requests
+            </Text>
+
+            <View style={styles.countPill}>
+              <Text style={styles.countPillText}>
+                {pendingCount} Pending
+              </Text>
+            </View>
+          </View>
         </View>
 
-        <Text style={styles.sectionTitle}>My Dues</Text>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>My Dues</Text>
+          <Text style={styles.sectionCount}>{dues.length} Requests</Text>
+        </View>
 
         {dues.length === 0 ? (
-          <View style={styles.emptyCard}>
-            <Ionicons name="checkmark-circle-outline" size={44} color="#16A34A" />
-            <Text style={styles.emptyTitle}>No dues found</Text>
-            <Text style={styles.emptyText}>
-              You do not have any pending dues right now.
-            </Text>
-          </View>
+          <AppCard>
+            <EmptyState
+              icon="checkmark-circle-outline"
+              title="No dues found"
+              subtitle="You do not have any pending dues right now."
+            />
+          </AppCard>
         ) : (
           dues.map((item) => (
             <DueCard
@@ -107,22 +146,21 @@ export default function MyDuesScreen({ navigation }) {
 
 function DueCard({ item, onPay }) {
   const status = item.paymentStatus || "PENDING";
+
   const isPending =
-  status === "PENDING" || status === "REJECTED";
+    status === "PENDING" ||
+    status === "REJECTED";
+
+  const iconName =
+    item.requestType === "Maintenance"
+      ? "home-outline"
+      : "alert-circle-outline";
 
   return (
-    <View style={styles.dueCard}>
+    <AppCard style={styles.dueCard}>
       <View style={styles.cardTop}>
         <View style={styles.iconBox}>
-          <Ionicons
-            name={
-              item.requestType === "Maintenance"
-                ? "home-outline"
-                : "alert-circle-outline"
-            }
-            size={24}
-            color="#2563EB"
-          />
+          <Ionicons name={iconName} size={24} color={COLORS.primary} />
         </View>
 
         <View style={styles.cardTitleBlock}>
@@ -145,47 +183,27 @@ function DueCard({ item, onPay }) {
         </View>
 
         {isPending ? (
-          <TouchableOpacity style={styles.payButton} onPress={onPay}>
-            <Text style={styles.payButtonText}>Pay Now</Text>
-          </TouchableOpacity>
+          <AppButton
+            title="Pay Now"
+            onPress={onPay}
+            style={styles.payButton}
+          />
         ) : (
           <Text style={styles.noActionText}>{status}</Text>
         )}
       </View>
 
       <View style={styles.footerRow}>
-        <Text style={styles.footerText}>Payment ID</Text>
+        <View style={styles.footerItem}>
+          <Ionicons name="document-text-outline" size={14} color={COLORS.textMuted} />
+          <Text style={styles.footerText}>Payment ID</Text>
+        </View>
+
         <Text style={styles.footerValue}>
           {String(item.paymentId).substring(0, 8)}...
         </Text>
       </View>
-    </View>
-  );
-}
-
-function StatusBadge({ status }) {
-  let bg = "#FEF3C7";
-  let color = "#D97706";
-
-  if (status === "PAID") {
-    bg = "#DCFCE7";
-    color = "#16A34A";
-  }
-
-  if (status === "SUBMITTED") {
-    bg = "#DBEAFE";
-    color = "#2563EB";
-  }
-
-  if (status === "REJECTED") {
-    bg = "#FEE2E2";
-    color = "#DC2626";
-  }
-
-  return (
-    <View style={[styles.statusBadge, { backgroundColor: bg }]}>
-      <Text style={[styles.statusText, { color }]}>{status}</Text>
-    </View>
+    </AppCard>
   );
 }
 
@@ -220,12 +238,12 @@ function formatAmount(value) {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#F5F7FB",
+    backgroundColor: COLORS.background,
   },
 
   container: {
     padding: 18,
-    paddingBottom: 40,
+    paddingBottom: 50,
   },
 
   loaderContainer: {
@@ -237,72 +255,94 @@ const styles = StyleSheet.create({
   loaderText: {
     marginTop: 10,
     fontSize: 15,
-    color: "#6B7280",
+    color: COLORS.textMuted,
+    fontWeight: "600",
   },
 
   summaryCard: {
-    backgroundColor: "#2563EB",
-    borderRadius: 22,
+    backgroundColor: COLORS.primary,
+    borderRadius: 26,
     padding: 20,
     marginBottom: 24,
+  },
+
+  summaryTop: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
   },
 
   summaryLabel: {
     fontSize: 14,
     color: "#DBEAFE",
-    fontWeight: "700",
+    fontWeight: "800",
   },
 
   summaryAmount: {
-    fontSize: 34,
+    fontSize: 36,
     fontWeight: "900",
-    color: "#FFFFFF",
+    color: COLORS.white,
     marginTop: 6,
+  },
+
+  summaryIconBox: {
+    width: 58,
+    height: 58,
+    borderRadius: 20,
+    backgroundColor: "rgba(255,255,255,0.18)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  summaryFooter: {
+    marginTop: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
 
   summarySubText: {
     fontSize: 13,
     color: "#E0E7FF",
-    marginTop: 6,
+    fontWeight: "600",
+    flex: 1,
+    paddingRight: 10,
+  },
+
+  countPill: {
+    backgroundColor: "rgba(255,255,255,0.18)",
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+
+  countPillText: {
+    color: COLORS.white,
+    fontSize: 11,
+    fontWeight: "900",
+  },
+
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 14,
   },
 
   sectionTitle: {
     fontSize: 22,
     fontWeight: "900",
-    color: "#111827",
-    marginBottom: 14,
+    color: COLORS.text,
   },
 
-  emptyCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 18,
-    padding: 24,
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-  },
-
-  emptyTitle: {
-    fontSize: 18,
+  sectionCount: {
+    fontSize: 13,
+    color: COLORS.primary,
     fontWeight: "800",
-    color: "#111827",
-    marginTop: 12,
-  },
-
-  emptyText: {
-    fontSize: 14,
-    color: "#6B7280",
-    textAlign: "center",
-    marginTop: 6,
   },
 
   dueCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 18,
-    padding: 16,
     marginBottom: 14,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
   },
 
   cardTop: {
@@ -311,9 +351,9 @@ const styles = StyleSheet.create({
   },
 
   iconBox: {
-    width: 46,
-    height: 46,
-    borderRadius: 15,
+    width: 48,
+    height: 48,
+    borderRadius: 17,
     backgroundColor: "#EEF5FF",
     alignItems: "center",
     justifyContent: "center",
@@ -322,36 +362,27 @@ const styles = StyleSheet.create({
 
   cardTitleBlock: {
     flex: 1,
+    paddingRight: 8,
   },
 
   cardTitle: {
     fontSize: 16,
-    fontWeight: "800",
-    color: "#111827",
+    fontWeight: "900",
+    color: COLORS.text,
   },
 
   cardSubtitle: {
     fontSize: 13,
-    color: "#6B7280",
+    color: COLORS.textMuted,
     marginTop: 3,
-  },
-
-  statusBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 12,
-  },
-
-  statusText: {
-    fontSize: 11,
-    fontWeight: "800",
+    fontWeight: "600",
   },
 
   amountRow: {
     marginTop: 18,
     paddingTop: 14,
     borderTopWidth: 1,
-    borderTopColor: "#F3F4F6",
+    borderTopColor: COLORS.borderLight,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
@@ -359,50 +390,50 @@ const styles = StyleSheet.create({
 
   amountLabel: {
     fontSize: 13,
-    color: "#6B7280",
-    fontWeight: "600",
+    color: COLORS.textMuted,
+    fontWeight: "700",
   },
 
   amount: {
-    fontSize: 24,
+    fontSize: 25,
     fontWeight: "900",
-    color: "#111827",
+    color: COLORS.text,
     marginTop: 3,
   },
 
   payButton: {
-    backgroundColor: "#2563EB",
     paddingHorizontal: 18,
     paddingVertical: 11,
-    borderRadius: 13,
-  },
-
-  payButtonText: {
-    color: "#FFFFFF",
-    fontWeight: "800",
-    fontSize: 13,
   },
 
   noActionText: {
     fontSize: 13,
-    fontWeight: "800",
-    color: "#6B7280",
+    fontWeight: "900",
+    color: COLORS.textMuted,
   },
 
   footerRow: {
     marginTop: 14,
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "center",
+  },
+
+  footerItem: {
+    flexDirection: "row",
+    alignItems: "center",
   },
 
   footerText: {
     fontSize: 12,
-    color: "#9CA3AF",
+    color: COLORS.textMuted,
+    marginLeft: 5,
+    fontWeight: "600",
   },
 
   footerValue: {
     fontSize: 12,
-    color: "#6B7280",
-    fontWeight: "700",
+    color: COLORS.textSecondary,
+    fontWeight: "800",
   },
 });

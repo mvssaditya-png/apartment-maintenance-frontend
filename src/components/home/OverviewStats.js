@@ -2,6 +2,9 @@ import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
+import AppCard from "../common/AppCard";
+import { COLORS } from "../common/theme";
+
 export default function OverviewStats({ summary, dashboard }) {
   const totalCollection =
     summary?.totalCollection ??
@@ -39,7 +42,7 @@ export default function OverviewStats({ summary, dashboard }) {
           title="Paid This Month"
           amount={`₹${formatAmount(totalCollection)}`}
           icon="trending-up-outline"
-          iconColor="#16A34A"
+          iconColor={COLORS.success}
           bg="#ECFDF5"
         />
 
@@ -47,7 +50,7 @@ export default function OverviewStats({ summary, dashboard }) {
           title="Expenses"
           amount={`₹${formatAmount(totalExpenses)}`}
           icon="trending-down-outline"
-          iconColor="#DC2626"
+          iconColor={COLORS.danger}
           bg="#FEF2F2"
         />
 
@@ -55,7 +58,7 @@ export default function OverviewStats({ summary, dashboard }) {
           title="Opening Balance"
           amount={`₹${formatAmount(openingBalance)}`}
           icon="card-outline"
-          iconColor="#2563EB"
+          iconColor={COLORS.primary}
           bg="#EEF5FF"
         />
 
@@ -63,7 +66,7 @@ export default function OverviewStats({ summary, dashboard }) {
           title="Closing Balance"
           amount={`₹${formatAmount(closingBalance)}`}
           icon="pie-chart-outline"
-          iconColor="#7C3AED"
+          iconColor={COLORS.purple}
           bg="#F3E8FF"
         />
       </View>
@@ -73,7 +76,7 @@ export default function OverviewStats({ summary, dashboard }) {
 
 function StatCard({ title, amount, icon, iconColor, bg }) {
   return (
-    <View style={styles.card}>
+    <AppCard style={styles.card}>
       <View style={styles.top}>
         <Text style={styles.title}>{title}</Text>
 
@@ -83,7 +86,7 @@ function StatCard({ title, amount, icon, iconColor, bg }) {
       </View>
 
       <Text style={styles.amount}>{amount}</Text>
-    </View>
+    </AppCard>
   );
 }
 
@@ -104,15 +107,15 @@ const styles = StyleSheet.create({
 
   sectionTitle: {
     fontSize: 20,
-    fontWeight: "800",
-    color: "#111827",
+    fontWeight: "900",
+    color: COLORS.text,
     marginBottom: 14,
   },
 
   monthText: {
-    color: "#2563EB",
+    color: COLORS.primary,
     fontSize: 13,
-    fontWeight: "700",
+    fontWeight: "800",
     marginBottom: 14,
   },
 
@@ -125,12 +128,8 @@ const styles = StyleSheet.create({
 
   card: {
     width: "48%",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
     padding: 15,
     marginBottom: 12,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
   },
 
   top: {
@@ -141,15 +140,16 @@ const styles = StyleSheet.create({
 
   title: {
     fontSize: 13,
-    color: "#374151",
-    fontWeight: "600",
+    color: COLORS.textSecondary,
+    fontWeight: "700",
     flex: 1,
+    paddingRight: 6,
   },
 
   iconBox: {
-    width: 34,
-    height: 34,
-    borderRadius: 12,
+    width: 36,
+    height: 36,
+    borderRadius: 13,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -157,7 +157,7 @@ const styles = StyleSheet.create({
   amount: {
     fontSize: 20,
     fontWeight: "900",
-    color: "#111827",
+    color: COLORS.text,
     marginTop: 14,
   },
 });

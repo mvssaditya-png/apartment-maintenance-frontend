@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from "react";
+
 import {
   View,
   Text,
@@ -6,23 +7,36 @@ import {
   StyleSheet,
   ActivityIndicator,
   RefreshControl,
-  Image,
   TouchableOpacity,
-  Modal,
 } from "react-native";
+
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 
 import API from "../api/axios";
 import { getExpenses } from "../api/dashboardApi";
+
 import ImagePreviewModal from "../components/common/ImagePreviewModal";
 
-export default function ViewExpensesScreen({ navigation }) {
-  const [expenses, setExpenses] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [previewImageUrl, setPreviewImageUrl] = useState(null);
+import AppCard from "../components/common/AppCard";
+import EmptyState from "../components/common/EmptyState";
+
+import { COLORS } from "../components/common/theme";
+
+export default function ViewExpensesScreen() {
+  const [expenses, setExpenses] =
+    useState([]);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [refreshing, setRefreshing] =
+    useState(false);
+
+  const [previewImageUrl, setPreviewImageUrl] =
+    useState(null);
+
   useFocusEffect(
     useCallback(() => {
       loadExpenses();
@@ -32,10 +46,17 @@ export default function ViewExpensesScreen({ navigation }) {
   const loadExpenses = async () => {
     try {
       setLoading(true);
-      const res = await getExpenses();
+
+      const res =
+        await getExpenses();
+
       setExpenses(res.data || []);
     } catch (error) {
-      console.log("VIEW EXPENSES ERROR:", error?.response?.data || error);
+      console.log(
+        "VIEW EXPENSES ERROR:",
+        error?.response?.data ||
+          error
+      );
     } finally {
       setLoading(false);
     }
@@ -43,151 +64,406 @@ export default function ViewExpensesScreen({ navigation }) {
 
   const onRefresh = async () => {
     setRefreshing(true);
+
     await loadExpenses();
+
     setRefreshing(false);
   };
 
-  const totalExpenses = expenses.reduce(
-    (sum, item) => sum + Number(item.amount || 0),
-    0
-  );
+  const totalExpenses =
+    expenses.reduce(
+      (sum, item) =>
+        sum +
+        Number(item.amount || 0),
+      0
+    );
 
-  const getFullImageUrl = (receiptUrl) => {
+  const getFullImageUrl = (
+    receiptUrl
+  ) => {
     if (!receiptUrl) return null;
 
-    if (receiptUrl.startsWith("http")) {
+    if (
+      receiptUrl.startsWith(
+        "http"
+      )
+    ) {
       return receiptUrl;
     }
 
-    return API.defaults.baseURL.replace("/api", "") + receiptUrl;
+    return (
+      API.defaults.baseURL.replace(
+        "/api",
+        ""
+      ) + receiptUrl
+    );
   };
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.loaderContainer}>
-          <ActivityIndicator size="large" color="#2563EB" />
-          <Text style={styles.loaderText}>Loading expenses...</Text>
+      <SafeAreaView
+        style={styles.safeArea}
+      >
+        <View
+          style={
+            styles.loaderContainer
+          }
+        >
+          <ActivityIndicator
+            size="large"
+            color={COLORS.primary}
+          />
+
+          <Text
+            style={
+              styles.loaderText
+            }
+          >
+            Loading expenses...
+          </Text>
         </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={["bottom"]}>
+    <SafeAreaView
+      style={styles.safeArea}
+      edges={["bottom"]}
+    >
       <ScrollView
-        contentContainerStyle={styles.container}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        contentContainerStyle={
+          styles.container
         }
-        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={
+              refreshing
+            }
+            onRefresh={onRefresh}
+            colors={[
+              COLORS.primary,
+            ]}
+            tintColor={
+              COLORS.primary
+            }
+          />
+        }
+        showsVerticalScrollIndicator={
+          false
+        }
       >
-        <View style={styles.summaryCard}>
-          <Text style={styles.summaryLabel}>Total Expenses</Text>
-          <Text style={styles.summaryAmount}>₹{formatAmount(totalExpenses)}</Text>
-          <Text style={styles.summarySubText}>
-            Society expenses recorded so far
-          </Text>
-        </View>
+        <AppCard
+          style={
+            styles.summaryCard
+          }
+        >
+          <View
+            style={
+              styles.summaryTopRow
+            }
+          >
+            <View
+              style={
+                styles.summaryTextBlock
+              }
+            >
+              <Text
+                style={
+                  styles.summaryLabel
+                }
+              >
+                Total Expenses
+              </Text>
 
-        <Text style={styles.sectionTitle}>Expense List</Text>
+              <Text
+                style={
+                  styles.summaryAmount
+                }
+              >
+                ₹
+                {formatAmount(
+                  totalExpenses
+                )}
+              </Text>
 
-        {expenses.length === 0 ? (
-          <View style={styles.emptyCard}>
-            <Ionicons name="receipt-outline" size={46} color="#2563EB" />
-            <Text style={styles.emptyTitle}>No expenses found</Text>
-            <Text style={styles.emptyText}>
-              No society expenses have been added yet.
-            </Text>
+              <Text
+                style={
+                  styles.summarySubText
+                }
+              >
+                Society expenses
+                recorded so far
+              </Text>
+            </View>
+
+            <View
+              style={
+                styles.summaryIconBox
+              }
+            >
+              <Ionicons
+                name="wallet-outline"
+                size={30}
+                color="#FFFFFF"
+              />
+            </View>
           </View>
+        </AppCard>
+
+        <Text
+          style={
+            styles.sectionTitle
+          }
+        >
+          Expense List
+        </Text>
+
+        {expenses.length ===
+        0 ? (
+          <AppCard>
+            <EmptyState
+              icon="receipt-outline"
+              title="No expenses found"
+              subtitle="No society expenses have been added yet."
+            />
+          </AppCard>
         ) : (
           expenses.map((item) => (
-            <View key={item.expenseId} style={styles.card}>
-              <View style={styles.topRow}>
-                <View style={styles.iconBox}>
-                  <Ionicons name="wallet-outline" size={24} color="#DC2626" />
+            <AppCard
+              key={item.expenseId}
+              style={
+                styles.card
+              }
+            >
+              <View
+                style={styles.topRow}
+              >
+                <View
+                  style={
+                    styles.iconBox
+                  }
+                >
+                  <Ionicons
+                    name="wallet-outline"
+                    size={24}
+                    color="#DC2626"
+                  />
                 </View>
 
-                <View style={styles.titleBlock}>
-                  <Text style={styles.title}>{item.title}</Text>
-                  <Text style={styles.subtitle}>
-                    {formatCategory(item.category)} • {formatDate(item.expenseDate)}
+                <View
+                  style={
+                    styles.titleBlock
+                  }
+                >
+                  <Text
+                    style={
+                      styles.title
+                    }
+                  >
+                    {item.title}
+                  </Text>
+
+                  <Text
+                    style={
+                      styles.subtitle
+                    }
+                  >
+                    {formatCategory(
+                      item.category
+                    )}{" "}
+                    •{" "}
+                    {formatDate(
+                      item.expenseDate
+                    )}
                   </Text>
                 </View>
 
-                <Text style={styles.amount}>₹{formatAmount(item.amount)}</Text>
+                <Text
+                  style={
+                    styles.amount
+                  }
+                >
+                  ₹
+                  {formatAmount(
+                    item.amount
+                  )}
+                </Text>
               </View>
 
               {item.description ? (
-                <Text style={styles.description}>{item.description}</Text>
+                <Text
+                  style={
+                    styles.description
+                  }
+                >
+                  {
+                    item.description
+                  }
+                </Text>
               ) : null}
 
               {item.receiptUrl ? (
                 <TouchableOpacity
-                    style={styles.receiptPreviewBox}
-                    onPress={() =>
+                  style={
+                    styles.receiptPreviewBox
+                  }
+                  onPress={() =>
                     setPreviewImageUrl(
-                        getFullImageUrl(item.receiptUrl)
+                      getFullImageUrl(
+                        item.receiptUrl
+                      )
                     )
-                    }
-                    activeOpacity={0.8}
+                  }
+                  activeOpacity={0.85}
                 >
-
+                  <View
+                    style={
+                      styles.receiptIconCircle
+                    }
+                  >
                     <Ionicons
-                    name="image-outline"
-                    size={30}
-                    color="#2563EB"
+                      name="image-outline"
+                      size={32}
+                      color={
+                        COLORS.primary
+                      }
                     />
+                  </View>
 
-                    <Text style={styles.previewTitle}>
+                  <Text
+                    style={
+                      styles.previewTitle
+                    }
+                  >
                     Receipt Uploaded
-                    </Text>
+                  </Text>
 
-                    <Text style={styles.previewSubtitle}>
+                  <Text
+                    style={
+                      styles.previewSubtitle
+                    }
+                  >
                     Tap to view image
-                    </Text>
-
+                  </Text>
                 </TouchableOpacity>
-                ) : null}
+              ) : null}
 
-              <View style={styles.footerRow}>
-                <Text style={styles.footerLabel}>Expense ID</Text>
-                <Text style={styles.footerValue}>
-                  {String(item.expenseId).substring(0, 8)}...
+              <View
+                style={
+                  styles.footerRow
+                }
+              >
+                <View
+                  style={
+                    styles.footerInfo
+                  }
+                >
+                  <Ionicons
+                    name="document-text-outline"
+                    size={14}
+                    color={
+                      COLORS.textMuted
+                    }
+                  />
+
+                  <Text
+                    style={
+                      styles.footerLabel
+                    }
+                  >
+                    Expense ID
+                  </Text>
+                </View>
+
+                <Text
+                  style={
+                    styles.footerValue
+                  }
+                >
+                  {String(
+                    item.expenseId
+                  ).substring(0, 8)}
+                  ...
                 </Text>
               </View>
-            </View>
+            </AppCard>
           ))
         )}
       </ScrollView>
+
       <ImagePreviewModal
-        visible={!!previewImageUrl}
+        visible={
+          !!previewImageUrl
+        }
         imageUrl={previewImageUrl}
-        onClose={() => setPreviewImageUrl(null)}
-        />
+        onClose={() =>
+          setPreviewImageUrl(
+            null
+          )
+        }
+      />
     </SafeAreaView>
   );
 }
 
 function formatAmount(value) {
-  if (value === null || value === undefined || value === "") return "0";
-  return Number(value).toLocaleString("en-IN");
+  if (
+    value === null ||
+    value === undefined ||
+    value === ""
+  ) {
+    return "0";
+  }
+
+  return Number(value).toLocaleString(
+    "en-IN"
+  );
 }
 
-function formatCategory(value) {
+function formatCategory(
+  value
+) {
   if (!value) return "-";
-  return value.charAt(0) + value.slice(1).toLowerCase();
+
+  return value
+    .toLowerCase()
+    .replace(
+      /\b\w/g,
+      (char) =>
+        char.toUpperCase()
+    );
 }
 
 function formatDate(value) {
   if (!value) return "-";
-  return String(value).substring(0, 10);
+
+  const date = new Date(value);
+
+  if (
+    isNaN(date.getTime())
+  ) {
+    return String(value).substring(
+      0,
+      10
+    );
+  }
+
+  return date.toLocaleDateString(
+    "en-IN",
+    {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    }
+  );
 }
 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#F5F7FB",
+    backgroundColor:
+      COLORS.background,
   },
 
   container: {
@@ -197,21 +473,37 @@ const styles = StyleSheet.create({
 
   loaderContainer: {
     flex: 1,
-    justifyContent: "center",
+    justifyContent:
+      "center",
     alignItems: "center",
   },
 
   loaderText: {
     marginTop: 10,
     fontSize: 15,
-    color: "#6B7280",
+    color:
+      COLORS.textMuted,
+    fontWeight: "600",
   },
 
   summaryCard: {
-    backgroundColor: "#DC2626",
-    borderRadius: 22,
-    padding: 20,
+    backgroundColor:
+      "#DC2626",
+    borderWidth: 0,
+    borderRadius: 26,
     marginBottom: 24,
+  },
+
+  summaryTopRow: {
+    flexDirection: "row",
+    justifyContent:
+      "space-between",
+    alignItems: "center",
+  },
+
+  summaryTextBlock: {
+    flex: 1,
+    paddingRight: 14,
   },
 
   summaryLabel: {
@@ -222,7 +514,7 @@ const styles = StyleSheet.create({
 
   summaryAmount: {
     color: "#FFFFFF",
-    fontSize: 34,
+    fontSize: 36,
     fontWeight: "900",
     marginTop: 6,
   },
@@ -231,45 +523,30 @@ const styles = StyleSheet.create({
     color: "#FEE2E2",
     fontSize: 13,
     marginTop: 6,
+    fontWeight: "600",
+  },
+
+  summaryIconBox: {
+    width: 66,
+    height: 66,
+    borderRadius: 22,
+    backgroundColor:
+      "rgba(255,255,255,0.18)",
+    alignItems: "center",
+    justifyContent:
+      "center",
   },
 
   sectionTitle: {
-    fontSize: 22,
+    fontSize: 23,
     fontWeight: "900",
-    color: "#111827",
+    color: COLORS.text,
     marginBottom: 14,
-  },
-
-  emptyCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 18,
-    padding: 24,
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-  },
-
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: "800",
-    color: "#111827",
-    marginTop: 12,
-  },
-
-  emptyText: {
-    fontSize: 14,
-    color: "#6B7280",
-    textAlign: "center",
-    marginTop: 6,
   },
 
   card: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 18,
-    padding: 16,
-    marginBottom: 14,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
+    marginBottom: 16,
+    borderRadius: 22,
   },
 
   topRow: {
@@ -278,144 +555,119 @@ const styles = StyleSheet.create({
   },
 
   iconBox: {
-    width: 46,
-    height: 46,
-    borderRadius: 15,
-    backgroundColor: "#FEF2F2",
+    width: 50,
+    height: 50,
+    borderRadius: 18,
+    backgroundColor:
+      "#FEF2F2",
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent:
+      "center",
     marginRight: 12,
   },
 
   titleBlock: {
     flex: 1,
+    paddingRight: 8,
   },
 
   title: {
     fontSize: 16,
-    fontWeight: "800",
-    color: "#111827",
+    fontWeight: "900",
+    color: COLORS.text,
   },
 
   subtitle: {
     fontSize: 13,
-    color: "#6B7280",
-    marginTop: 3,
+    color:
+      COLORS.textMuted,
+    marginTop: 4,
+    fontWeight: "600",
   },
 
   amount: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "900",
     color: "#DC2626",
   },
 
   description: {
     fontSize: 14,
-    color: "#4B5563",
+    color:
+      COLORS.textSecondary,
     marginTop: 14,
-    lineHeight: 20,
+    lineHeight: 22,
+    fontWeight: "500",
   },
 
-  receiptImage: {
-    width: "100%",
-    height: 200,
-    borderRadius: 16,
-    marginTop: 16,
+  receiptPreviewBox: {
+    marginTop: 18,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderStyle: "dashed",
+    borderColor: "#BFDBFE",
+    backgroundColor: "#EFF6FF",
+    paddingVertical: 24,
+    alignItems: "center",
+    justifyContent:
+      "center",
+  },
+
+  receiptIconCircle: {
+    width: 70,
+    height: 70,
+    borderRadius: 24,
+    backgroundColor:
+      "#DBEAFE",
+    alignItems: "center",
+    justifyContent:
+      "center",
+    marginBottom: 14,
+  },
+
+  previewTitle: {
+    fontSize: 15,
+    fontWeight: "900",
+    color: "#1E3A8A",
+  },
+
+  previewSubtitle: {
+    fontSize: 13,
+    color:
+      COLORS.textMuted,
+    marginTop: 4,
+    fontWeight: "600",
   },
 
   footerRow: {
-    marginTop: 14,
+    marginTop: 16,
+    paddingTop: 14,
+    borderTopWidth: 1,
+    borderTopColor:
+      COLORS.borderLight,
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent:
+      "space-between",
+    alignItems: "center",
+  },
+
+  footerInfo: {
+    flexDirection: "row",
+    alignItems: "center",
   },
 
   footerLabel: {
     fontSize: 12,
-    color: "#9CA3AF",
+    color:
+      COLORS.textMuted,
+    marginLeft: 5,
+    fontWeight: "700",
   },
 
   footerValue: {
     fontSize: 12,
-    color: "#6B7280",
-    fontWeight: "700",
+    color:
+      COLORS.textSecondary,
+    fontWeight: "900",
   },
-  receiptPreviewBox: {
-  marginTop: 16,
-  borderRadius: 16,
-  borderWidth: 1,
-  borderColor: "#DBEAFE",
-  backgroundColor: "#EFF6FF",
-  paddingVertical: 24,
-  alignItems: "center",
-  justifyContent: "center",
-},
-
-previewTitle: {
-  fontSize: 15,
-  fontWeight: "800",
-  color: "#1E3A8A",
-  marginTop: 10,
-},
-
-previewSubtitle: {
-  fontSize: 13,
-  color: "#6B7280",
-  marginTop: 4,
-},
-modalOverlay: {
-  flex: 1,
-  backgroundColor: "rgba(0,0,0,0.55)",
-  justifyContent: "center",
-  alignItems: "center",
-  padding: 18,
-},
-
-modalContent: {
-  width: "100%",
-  height: "75%",
-  backgroundColor: "#FFFFFF",
-  borderRadius: 22,
-  overflow: "hidden",
-},
-
-closeButton: {
-  position: "absolute",
-  top: 16,
-  right: 16,
-  zIndex: 10,
-  width: 42,
-  height: 42,
-  borderRadius: 21,
-  backgroundColor: "rgba(17,24,39,0.85)",
-  alignItems: "center",
-  justifyContent: "center",
-},
-
-modalImage: {
-  width: "100%",
-  height: "100%",
-},
-receiptPreviewBox: {
-  marginTop: 16,
-  borderRadius: 16,
-  borderWidth: 1,
-  borderColor: "#DBEAFE",
-  backgroundColor: "#EFF6FF",
-  paddingVertical: 24,
-  alignItems: "center",
-  justifyContent: "center",
-},
-
-previewTitle: {
-  fontSize: 15,
-  fontWeight: "800",
-  color: "#1E3A8A",
-  marginTop: 10,
-},
-
-previewSubtitle: {
-  fontSize: 13,
-  color: "#6B7280",
-  marginTop: 4,
-},
 });

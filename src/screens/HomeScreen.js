@@ -10,7 +10,6 @@ import {
 } from "react-native";
 
 import { SafeAreaView } from "react-native-safe-area-context";
-
 import { useFocusEffect } from "@react-navigation/native";
 
 import {
@@ -26,6 +25,8 @@ import BalanceCard from "../components/home/BalanceCard";
 import QuickActions from "../components/home/QuickActions";
 import OverviewStats from "../components/home/OverviewStats";
 import RecentActivity from "../components/home/RecentActivity";
+
+import { COLORS } from "../components/common/theme";
 
 export default function HomeScreen({ navigation }) {
   const [user, setUser] = useState(null);
@@ -135,7 +136,7 @@ export default function HomeScreen({ navigation }) {
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.loaderContainer}>
-          <ActivityIndicator size="large" color="#2563EB" />
+          <ActivityIndicator size="large" color={COLORS.primary} />
           <Text style={styles.loaderText}>Loading dashboard...</Text>
         </View>
       </SafeAreaView>
@@ -148,7 +149,12 @@ export default function HomeScreen({ navigation }) {
         contentContainerStyle={styles.container}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[COLORS.primary]}
+            tintColor={COLORS.primary}
+          />
         }
       >
         <HomeHeader
@@ -166,10 +172,7 @@ export default function HomeScreen({ navigation }) {
 
         <QuickActions role={user?.role} navigation={navigation} />
 
-        <OverviewStats
-          summary={summary}
-          dashboard={dashboard}
-        />
+        <OverviewStats summary={summary} dashboard={dashboard} />
 
         <RecentActivity dashboard={dashboard} />
       </ScrollView>
@@ -180,13 +183,13 @@ export default function HomeScreen({ navigation }) {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#F5F7FB",
+    backgroundColor: COLORS.background,
   },
 
   container: {
     paddingHorizontal: 18,
     paddingTop: 12,
-    paddingBottom: 95,
+    paddingBottom: 100,
   },
 
   loaderContainer: {
@@ -198,6 +201,7 @@ const styles = StyleSheet.create({
   loaderText: {
     marginTop: 10,
     fontSize: 15,
-    color: "#6B7280",
+    color: COLORS.textMuted,
+    fontWeight: "600",
   },
 });

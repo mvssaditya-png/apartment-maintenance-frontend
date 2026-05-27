@@ -1,15 +1,16 @@
 import React, { useCallback, useState } from "react";
+
 import {
   View,
   Text,
   ScrollView,
   StyleSheet,
-  TextInput,
   TouchableOpacity,
   ActivityIndicator,
   Alert,
   RefreshControl,
 } from "react-native";
+
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
@@ -21,16 +22,31 @@ import {
   toggleNotice,
 } from "../api/dashboardApi";
 
+import AppCard from "../components/common/AppCard";
+import AppButton from "../components/common/AppButton";
+import AppInput from "../components/common/AppInput";
+import EmptyState from "../components/common/EmptyState";
+import StatusBadge from "../components/common/StatusBadge";
+
+import { COLORS } from "../components/common/theme";
+
 export default function NoticesScreen() {
   const [user, setUser] = useState(null);
+
   const [notices, setNotices] = useState([]);
 
   const [title, setTitle] = useState("");
+
   const [message, setMessage] = useState("");
 
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] =
+    useState(true);
+
+  const [saving, setSaving] =
+    useState(false);
+
+  const [refreshing, setRefreshing] =
+    useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -42,16 +58,28 @@ export default function NoticesScreen() {
     try {
       setLoading(true);
 
-      const [userRes, noticesRes] = await Promise.all([
-        getLoggedInUser(),
-        getNotices(),
-      ]);
+      const [userRes, noticesRes] =
+        await Promise.all([
+          getLoggedInUser(),
+          getNotices(),
+        ]);
 
       setUser(userRes.data);
-      setNotices(noticesRes.data || []);
+
+      setNotices(
+        noticesRes.data || []
+      );
     } catch (error) {
-      console.log("NOTICES ERROR:", error?.response?.data || error);
-      Alert.alert("Error", "Unable to load notices.");
+      console.log(
+        "NOTICES ERROR:",
+        error?.response?.data ||
+          error
+      );
+
+      Alert.alert(
+        "Error",
+        "Unable to load notices."
+      );
     } finally {
       setLoading(false);
     }
@@ -59,174 +87,322 @@ export default function NoticesScreen() {
 
   const onRefresh = async () => {
     setRefreshing(true);
+
     await loadData();
+
     setRefreshing(false);
   };
 
-  const isAdmin = user?.role?.toUpperCase() === "ADMIN";
+  const isAdmin =
+    user?.role?.toUpperCase() ===
+    "ADMIN";
 
-  const handleCreateNotice = async () => {
-    if (!title.trim()) {
-      Alert.alert("Validation Error", "Please enter notice title.");
-      return;
-    }
+  const handleCreateNotice =
+    async () => {
+      if (!title.trim()) {
+        Alert.alert(
+          "Validation Error",
+          "Please enter notice title."
+        );
 
-    if (!message.trim()) {
-      Alert.alert("Validation Error", "Please enter notice message.");
-      return;
-    }
+        return;
+      }
 
-    try {
-      setSaving(true);
+      if (!message.trim()) {
+        Alert.alert(
+          "Validation Error",
+          "Please enter notice message."
+        );
 
-      await createNotice({
-        title: title.trim(),
-        message: message.trim(),
-      });
+        return;
+      }
 
-      setTitle("");
-      setMessage("");
+      try {
+        setSaving(true);
 
-      Alert.alert("Success", "Notice created successfully.");
+        await createNotice({
+          title: title.trim(),
+          message: message.trim(),
+        });
 
-      await loadData();
-    } catch (error) {
-      console.log("CREATE NOTICE ERROR:", error?.response?.data || error);
-      Alert.alert("Error", "Unable to create notice.");
-    } finally {
-      setSaving(false);
-    }
-  };
+        setTitle("");
+        setMessage("");
 
-  const handleToggleNotice = async (noticeId) => {
-    try {
-      await toggleNotice(noticeId);
-      await loadData();
-    } catch (error) {
-      console.log("TOGGLE NOTICE ERROR:", error?.response?.data || error);
-      Alert.alert("Error", "Unable to update notice.");
-    }
-  };
+        Alert.alert(
+          "Success",
+          "Notice created successfully."
+        );
+
+        await loadData();
+      } catch (error) {
+        console.log(
+          "CREATE NOTICE ERROR:",
+          error?.response?.data ||
+            error
+        );
+
+        Alert.alert(
+          "Error",
+          "Unable to create notice."
+        );
+      } finally {
+        setSaving(false);
+      }
+    };
+
+  const handleToggleNotice =
+    async (noticeId) => {
+      try {
+        await toggleNotice(
+          noticeId
+        );
+
+        await loadData();
+      } catch (error) {
+        console.log(
+          "TOGGLE NOTICE ERROR:",
+          error?.response?.data ||
+            error
+        );
+
+        Alert.alert(
+          "Error",
+          "Unable to update notice."
+        );
+      }
+    };
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.loaderContainer}>
-          <ActivityIndicator size="large" color="#2563EB" />
-          <Text style={styles.loaderText}>Loading notices...</Text>
+      <SafeAreaView
+        style={styles.safeArea}
+      >
+        <View
+          style={
+            styles.loaderContainer
+          }
+        >
+          <ActivityIndicator
+            size="large"
+            color={COLORS.primary}
+          />
+
+          <Text
+            style={
+              styles.loaderText
+            }
+          >
+            Loading notices...
+          </Text>
         </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={["bottom"]}>
+    <SafeAreaView
+      style={styles.safeArea}
+      edges={["bottom"]}
+    >
       <ScrollView
-        contentContainerStyle={styles.container}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        contentContainerStyle={
+          styles.container
         }
-        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={
+              refreshing
+            }
+            onRefresh={onRefresh}
+            colors={[
+              COLORS.primary,
+            ]}
+            tintColor={
+              COLORS.primary
+            }
+          />
+        }
+        showsVerticalScrollIndicator={
+          false
+        }
       >
-        <Text style={styles.heading}>Notices</Text>
-        <Text style={styles.subtitle}>
-          View society announcements and important updates.
-        </Text>
+        <View
+          style={
+            styles.headerCard
+          }
+        >
+          <Ionicons
+            name="megaphone-outline"
+            size={42}
+            color="#FFFFFF"
+          />
+
+          <Text
+            style={styles.heading}
+          >
+            Notices
+          </Text>
+
+          <Text
+            style={
+              styles.subtitle
+            }
+          >
+            Society announcements,
+            maintenance updates and
+            important information.
+          </Text>
+        </View>
 
         {isAdmin && (
-          <View style={styles.formCard}>
-            <Text style={styles.formTitle}>Create Notice</Text>
+          <AppCard
+            style={styles.formCard}
+          >
+            <Text
+              style={
+                styles.formTitle
+              }
+            >
+              Create Notice
+            </Text>
 
-            <Text style={styles.label}>Title</Text>
-            <TextInput
-              style={styles.input}
+            <AppInput
+              label="Title"
               placeholder="Example: Water supply maintenance"
               value={title}
               onChangeText={setTitle}
             />
 
-            <Text style={styles.label}>Message</Text>
-            <TextInput
-              style={[styles.input, styles.messageInput]}
+            <AppInput
+              label="Message"
               placeholder="Write notice message..."
               value={message}
-              onChangeText={setMessage}
+              onChangeText={
+                setMessage
+              }
               multiline
             />
 
-            <TouchableOpacity
-              style={styles.saveButton}
-              onPress={handleCreateNotice}
-              disabled={saving}
-            >
-              {saving ? (
-                <ActivityIndicator color="#FFFFFF" />
-              ) : (
-                <Text style={styles.saveButtonText}>Publish Notice</Text>
-              )}
-            </TouchableOpacity>
-          </View>
+            <AppButton
+              title="Publish Notice"
+              onPress={
+                handleCreateNotice
+              }
+              loading={saving}
+            />
+          </AppCard>
         )}
 
-        <Text style={styles.sectionTitle}>Recent Notices</Text>
+        <Text
+          style={
+            styles.sectionTitle
+          }
+        >
+          Recent Notices
+        </Text>
 
-        {notices.length === 0 ? (
-          <View style={styles.emptyCard}>
-            <Ionicons name="megaphone-outline" size={44} color="#2563EB" />
-            <Text style={styles.emptyTitle}>No notices found</Text>
-            <Text style={styles.emptyText}>
-              Society announcements will appear here.
-            </Text>
-          </View>
+        {notices.length ===
+        0 ? (
+          <AppCard>
+            <EmptyState
+              icon="megaphone-outline"
+              title="No notices found"
+              subtitle="Society announcements will appear here."
+            />
+          </AppCard>
         ) : (
           notices.map((item) => (
-            <View key={item.noticeId} style={styles.noticeCard}>
-              <View style={styles.noticeTop}>
-                <View style={styles.iconBox}>
-                  <Ionicons name="megaphone-outline" size={24} color="#2563EB" />
+            <AppCard
+              key={item.noticeId}
+              style={
+                styles.noticeCard
+              }
+            >
+              <View
+                style={
+                  styles.noticeTop
+                }
+              >
+                <View
+                  style={
+                    styles.iconBox
+                  }
+                >
+                  <Ionicons
+                    name="megaphone-outline"
+                    size={24}
+                    color={
+                      COLORS.primary
+                    }
+                  />
                 </View>
 
-                <View style={styles.noticeTextBlock}>
-                  <Text style={styles.noticeTitle}>{item.title}</Text>
-                  <Text style={styles.noticeDate}>
-                    {formatDate(item.createdAt)}
+                <View
+                  style={
+                    styles.noticeTextBlock
+                  }
+                >
+                  <Text
+                    style={
+                      styles.noticeTitle
+                    }
+                  >
+                    {item.title}
+                  </Text>
+
+                  <Text
+                    style={
+                      styles.noticeDate
+                    }
+                  >
+                    {formatDate(
+                      item.createdAt
+                    )}
                   </Text>
                 </View>
 
                 {isAdmin && (
-                  <View
-                    style={[
-                      styles.statusBadge,
-                      item.active ? styles.activeBadge : styles.inactiveBadge,
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.statusText,
-                        item.active
-                          ? styles.activeStatusText
-                          : styles.inactiveStatusText,
-                      ]}
-                    >
-                      {item.active ? "Active" : "Inactive"}
-                    </Text>
-                  </View>
+                  <StatusBadge
+                    status={
+                      item.active
+                        ? "ACTIVE"
+                        : "INACTIVE"
+                    }
+                  />
                 )}
               </View>
 
-              <Text style={styles.noticeMessage}>{item.message}</Text>
+              <Text
+                style={
+                  styles.noticeMessage
+                }
+              >
+                {item.message}
+              </Text>
 
               {isAdmin && (
-                <TouchableOpacity
-                  style={styles.toggleButton}
-                  onPress={() => handleToggleNotice(item.noticeId)}
-                >
-                  <Text style={styles.toggleButtonText}>
-                    {item.active ? "Deactivate" : "Activate"}
-                  </Text>
-                </TouchableOpacity>
+                <AppButton
+                  title={
+                    item.active
+                      ? "Deactivate"
+                      : "Activate"
+                  }
+                  variant={
+                    item.active
+                      ? "secondary"
+                      : "primary"
+                  }
+                  onPress={() =>
+                    handleToggleNotice(
+                      item.noticeId
+                    )
+                  }
+                  style={
+                    styles.toggleButton
+                  }
+                />
               )}
-            </View>
+            </AppCard>
           ))
         )}
       </ScrollView>
@@ -240,20 +416,26 @@ function formatDate(value) {
   const date = new Date(value);
 
   if (isNaN(date.getTime())) {
-    return String(value).substring(0, 10);
+    return String(
+      value
+    ).substring(0, 10);
   }
 
-  return date.toLocaleDateString("en-IN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
+  return date.toLocaleDateString(
+    "en-IN",
+    {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    }
+  );
 }
 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#F5F7FB",
+    backgroundColor:
+      COLORS.background,
   },
 
   container: {
@@ -263,117 +445,63 @@ const styles = StyleSheet.create({
 
   loaderContainer: {
     flex: 1,
-    justifyContent: "center",
+    justifyContent:
+      "center",
     alignItems: "center",
   },
 
   loaderText: {
     marginTop: 10,
-    color: "#6B7280",
+    color:
+      COLORS.textMuted,
+    fontWeight: "600",
+  },
+
+  headerCard: {
+    backgroundColor:
+      COLORS.primary,
+    borderRadius: 28,
+    padding: 24,
+    marginBottom: 24,
   },
 
   heading: {
     fontSize: 30,
     fontWeight: "900",
-    color: "#111827",
+    color: "#FFFFFF",
+    marginTop: 10,
   },
 
   subtitle: {
-    fontSize: 15,
-    color: "#6B7280",
+    fontSize: 14,
+    color: "#DBEAFE",
     marginTop: 6,
-    marginBottom: 22,
-    lineHeight: 22,
+    lineHeight: 21,
+    fontWeight: "600",
   },
 
   formCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 18,
-    padding: 18,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
     marginBottom: 24,
+    borderRadius: 24,
   },
 
   formTitle: {
-    fontSize: 20,
+    fontSize: 21,
     fontWeight: "900",
-    color: "#111827",
+    color: COLORS.text,
     marginBottom: 16,
-  },
-
-  label: {
-    fontSize: 14,
-    fontWeight: "800",
-    color: "#374151",
-    marginBottom: 8,
-  },
-
-  input: {
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
-    borderRadius: 14,
-    padding: 14,
-    fontSize: 16,
-    backgroundColor: "#F9FAFB",
-    marginBottom: 16,
-  },
-
-  messageInput: {
-    minHeight: 110,
-    textAlignVertical: "top",
-  },
-
-  saveButton: {
-    backgroundColor: "#2563EB",
-    paddingVertical: 15,
-    borderRadius: 14,
-    alignItems: "center",
-  },
-
-  saveButtonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "900",
   },
 
   sectionTitle: {
-    fontSize: 22,
+    fontSize: 23,
     fontWeight: "900",
-    color: "#111827",
+    color: COLORS.text,
     marginBottom: 14,
-  },
-
-  emptyCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 18,
-    padding: 24,
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-  },
-
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: "900",
-    color: "#111827",
-    marginTop: 12,
-  },
-
-  emptyText: {
-    fontSize: 14,
-    color: "#6B7280",
-    textAlign: "center",
-    marginTop: 6,
   },
 
   noticeCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 18,
-    padding: 16,
-    marginBottom: 14,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
+    marginBottom: 16,
+    borderRadius: 22,
   },
 
   noticeTop: {
@@ -382,75 +510,46 @@ const styles = StyleSheet.create({
   },
 
   iconBox: {
-    width: 46,
-    height: 46,
-    borderRadius: 15,
-    backgroundColor: "#EEF4FF",
+    width: 50,
+    height: 50,
+    borderRadius: 18,
+    backgroundColor:
+      "#EEF5FF",
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent:
+      "center",
     marginRight: 12,
   },
 
   noticeTextBlock: {
     flex: 1,
+    paddingRight: 10,
   },
 
   noticeTitle: {
     fontSize: 16,
     fontWeight: "900",
-    color: "#111827",
+    color: COLORS.text,
   },
 
   noticeDate: {
     fontSize: 12,
-    color: "#6B7280",
+    color:
+      COLORS.textMuted,
     marginTop: 4,
+    fontWeight: "600",
   },
 
   noticeMessage: {
     fontSize: 14,
-    color: "#374151",
-    marginTop: 14,
-    lineHeight: 21,
-  },
-
-  statusBadge: {
-    paddingHorizontal: 9,
-    paddingVertical: 5,
-    borderRadius: 12,
-  },
-
-  activeBadge: {
-    backgroundColor: "#DCFCE7",
-  },
-
-  inactiveBadge: {
-    backgroundColor: "#F3F4F6",
-  },
-
-  statusText: {
-    fontSize: 11,
-    fontWeight: "900",
-  },
-
-  activeStatusText: {
-    color: "#16A34A",
-  },
-
-  inactiveStatusText: {
-    color: "#6B7280",
+    color:
+      COLORS.textSecondary,
+    marginTop: 16,
+    lineHeight: 22,
+    fontWeight: "500",
   },
 
   toggleButton: {
-    marginTop: 16,
-    paddingVertical: 12,
-    borderRadius: 14,
-    backgroundColor: "#F3F4F6",
-    alignItems: "center",
-  },
-
-  toggleButtonText: {
-    color: "#374151",
-    fontWeight: "900",
+    marginTop: 18,
   },
 });

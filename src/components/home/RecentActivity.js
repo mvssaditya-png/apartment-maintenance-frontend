@@ -1,23 +1,27 @@
 import React from "react";
+
 import { View, Text, StyleSheet } from "react-native";
+
 import { Ionicons } from "@expo/vector-icons";
+
+import AppCard from "../common/AppCard";
+import { COLORS } from "../common/theme";
 
 export default function RecentActivity({ dashboard }) {
   return (
     <>
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>Recent Activity</Text>
-        <Text style={styles.viewAll}>View All</Text>
       </View>
 
-      <View style={styles.card}>
+      <AppCard style={styles.card}>
         <ActivityItem
           icon="checkmark-circle-outline"
           title="Payments Collected"
           subtitle="Total paid flats this month"
           amount={`${dashboard?.paidFlats ?? 0} flats`}
           status="Paid"
-          statusColor="#16A34A"
+          statusColor={COLORS.success}
           statusBg="#DCFCE7"
         />
 
@@ -27,7 +31,7 @@ export default function RecentActivity({ dashboard }) {
           subtitle="Flats with pending dues"
           amount={`${dashboard?.pendingFlats ?? 0} flats`}
           status="Pending"
-          statusColor="#EA580C"
+          statusColor={COLORS.warning}
           statusBg="#FFEDD5"
         />
 
@@ -37,7 +41,7 @@ export default function RecentActivity({ dashboard }) {
           subtitle="Collected this month"
           amount={`₹${formatAmount(dashboard?.specialRequestCollected)}`}
           status="Collected"
-          statusColor="#7C3AED"
+          statusColor={COLORS.purple}
           statusBg="#F3E8FF"
         />
 
@@ -47,10 +51,11 @@ export default function RecentActivity({ dashboard }) {
           subtitle="Registered flats in society"
           amount={`${dashboard?.totalFlats ?? 0}`}
           status="Info"
-          statusColor="#2563EB"
+          statusColor={COLORS.primary}
           statusBg="#DBEAFE"
+          hideBorder
         />
-      </View>
+      </AppCard>
     </>
   );
 }
@@ -63,12 +68,13 @@ function ActivityItem({
   status,
   statusColor,
   statusBg,
+  hideBorder = false,
 }) {
   return (
-    <View style={styles.item}>
+    <View style={[styles.item, hideBorder && styles.noBorder]}>
       <View style={styles.left}>
         <View style={styles.iconBox}>
-          <Ionicons name={icon} size={22} color="#2563EB" />
+          <Ionicons name={icon} size={22} color={COLORS.primary} />
         </View>
 
         <View style={styles.textBlock}>
@@ -97,6 +103,7 @@ function formatAmount(value) {
 
   return Number(value).toLocaleString("en-IN");
 }
+
 const styles = StyleSheet.create({
   sectionHeader: {
     flexDirection: "row",
@@ -106,25 +113,15 @@ const styles = StyleSheet.create({
 
   sectionTitle: {
     fontSize: 20,
-    fontWeight: "800",
-    color: "#111827",
-    marginBottom: 14,
-  },
-
-  viewAll: {
-    color: "#2563EB",
-    fontSize: 13,
-    fontWeight: "700",
+    fontWeight: "900",
+    color: COLORS.text,
     marginBottom: 14,
   },
 
   card: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 18,
     paddingHorizontal: 14,
     paddingVertical: 6,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
+    marginBottom: 30,
   },
 
   item: {
@@ -133,19 +130,24 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: "#F3F4F6",
+    borderBottomColor: COLORS.borderLight,
+  },
+
+  noBorder: {
+    borderBottomWidth: 0,
   },
 
   left: {
     flexDirection: "row",
     alignItems: "center",
     flex: 1,
+    paddingRight: 8,
   },
 
   iconBox: {
-    width: 40,
-    height: 40,
-    borderRadius: 14,
+    width: 42,
+    height: 42,
+    borderRadius: 15,
     backgroundColor: "#EEF5FF",
     alignItems: "center",
     justifyContent: "center",
@@ -158,14 +160,15 @@ const styles = StyleSheet.create({
 
   title: {
     fontSize: 14,
-    fontWeight: "700",
-    color: "#111827",
+    fontWeight: "800",
+    color: COLORS.text,
   },
 
   subtitle: {
     fontSize: 12,
-    color: "#6B7280",
+    color: COLORS.textMuted,
     marginTop: 3,
+    fontWeight: "600",
   },
 
   right: {
@@ -173,20 +176,20 @@ const styles = StyleSheet.create({
   },
 
   amount: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: "#374151",
+    fontSize: 13,
+    fontWeight: "900",
+    color: COLORS.textSecondary,
     marginBottom: 5,
   },
 
   statusPill: {
     paddingHorizontal: 9,
     paddingVertical: 4,
-    borderRadius: 10,
+    borderRadius: 999,
   },
 
   statusText: {
     fontSize: 11,
-    fontWeight: "700",
+    fontWeight: "800",
   },
 });
