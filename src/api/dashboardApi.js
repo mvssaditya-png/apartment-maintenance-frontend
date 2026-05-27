@@ -240,3 +240,13 @@ export const createComplaint = (payload) => {
 export const updateComplaintStatus = (complaintId, payload) => {
   return API.patch(`/complaints/${complaintId}/status`, payload);
 };
+
+export const getFullFileUrl = (fileUrl) => {
+  if (!fileUrl) return null;
+
+  if (fileUrl.startsWith("http")) {
+    return fileUrl;
+  }
+
+  return API.defaults.baseURL.replace("/api", "") + fileUrl;
+};

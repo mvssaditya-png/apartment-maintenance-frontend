@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   RefreshControl,
   TouchableOpacity,
+  Linking,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
@@ -18,6 +19,7 @@ import {
   getFlatStatement,
   getFlatStatementExportUrl,
   getAllFlatStatementsExportUrl,
+  getFullFileUrl,
 } from "../api/dashboardApi";
 import { Alert } from "react-native";
 import * as FileSystem from "expo-file-system/legacy";
@@ -293,8 +295,15 @@ export default function PaymentHistoryScreen() {
 function StatementCard({ item }) {
   const isCredit = Number(item.credit || 0) > 0;
   const amount = isCredit ? item.credit : item.debit;
-
   const balanceAfter = Number(item.balanceAfter || 0);
+
+  const handleViewReceipt = () => {
+    const receiptUrl = getFullFileUrl(item.receiptPdfUrl);
+
+    if (receiptUrl) {
+      Linking.openURL(receiptUrl);
+    }
+  };
 
   return (
     <View style={styles.statementCard}>
@@ -319,13 +328,8 @@ function StatementCard({ item }) {
         </View>
 
         <View style={styles.statementTextBlock}>
-          <Text style={styles.statementTitle}>
-            {item.description}
-          </Text>
-
-          <Text style={styles.statementDate}>
-            {formatDate(item.date)}
-          </Text>
+          <Text style={styles.statementTitle}>{item.description}</Text>
+          <Text style={styles.statementDate}>{formatDate(item.date)}</Text>
         </View>
 
         <Text
@@ -354,6 +358,17 @@ function StatementCard({ item }) {
           ₹{formatAmount(Math.abs(balanceAfter))}
         </Text>
       </View>
+
+      {isCredit && item.receiptPdfUrl ? (
+        <TouchableOpacity
+          style={styles.receiptButton}
+          onPress={handleViewReceipt}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="document-text-outline" size={18} color="#2563EB" />
+          <Text style={styles.receiptButtonText}>View Receipt PDF</Text>
+        </TouchableOpacity>
+      ) : null}
     </View>
   );
 }
@@ -631,5 +646,20 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 15,
     fontWeight: "800",
+  },
+  receiptButton: {
+    marginTop: 12,
+    backgroundColor: "#EEF4FF",
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+  },
+
+  receiptButtonText: {
+    color: "#2563EB",
+    fontWeight: "900",
+    marginLeft: 6,
   },
 });
