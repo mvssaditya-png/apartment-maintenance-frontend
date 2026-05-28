@@ -186,9 +186,15 @@ function DueCard({ item, onPay }) {
 
         <View style={styles.cardTitleBlock}>
           <Text style={styles.cardTitle}>
-            {item.requestType ||
-              t("myDues.paymentRequest")}
+            {item.requestType || t("myDues.paymentRequest")}
           </Text>
+
+          {item.requestType === "Special Request" &&
+          (item.description || item.requestTitle) ? (
+            <Text style={styles.specialRequestText}>
+              {item.description || item.requestTitle}
+            </Text>
+          ) : null}
 
           <Text style={styles.cardSubtitle}>
             {getMonthName(item.paymentMonth)}{" "}
@@ -476,5 +482,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: COLORS.textSecondary,
     fontWeight: "800",
+  },
+  specialRequestText: {
+    fontSize: 13,
+    color: COLORS.primary,
+    fontWeight: "800",
+    marginTop: 3,
   },
 });
