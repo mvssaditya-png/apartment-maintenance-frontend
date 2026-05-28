@@ -1,8 +1,16 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+} from "react-native";
+
 import { Ionicons } from "@expo/vector-icons";
 
 import { COLORS, SHADOW } from "../common/theme";
+import { t } from "../../i18n";
 
 export default function QuickActions({ role, navigation }) {
   const userRole = (role || "RESIDENT").toUpperCase();
@@ -32,7 +40,9 @@ export default function QuickActions({ role, navigation }) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.sectionTitle}>Quick Actions</Text>
+      <Text style={styles.sectionTitle}>
+        {t("home.quickActions")}
+      </Text>
 
       <View style={styles.grid}>
         {actions.map((item, index) => (
@@ -49,7 +59,9 @@ export default function QuickActions({ role, navigation }) {
               <Ionicons name={item.icon} size={24} color={item.color} />
             </View>
 
-            <Text style={styles.actionLabel}>{item.label}</Text>
+            <Text style={styles.actionLabel}>
+              {t(item.labelKey)}
+            </Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -61,49 +73,49 @@ function getActionsByRole(role) {
   const commonActions = [
     {
       key: "myDue",
-      label: "My\nDue",
+      labelKey: "home.actions.myDue",
       icon: "wallet-outline",
       color: COLORS.warning,
       bg: "#FFF3E8",
     },
     {
       key: "submittedPayments",
-      label: "Submitted\nPayments",
+      labelKey: "home.actions.submittedPayments",
       icon: "receipt-outline",
       color: COLORS.primary,
       bg: "#EEF5FF",
     },
     {
       key: "viewExpenses",
-      label: "View\nExpense",
+      labelKey: "home.actions.viewExpenses",
       icon: "eye-outline",
       color: COLORS.purple,
       bg: "#F3E8FF",
     },
     {
       key: "notices",
-      label: "Notices",
+      labelKey: "home.actions.notices",
       icon: "megaphone-outline",
       color: COLORS.primary,
       bg: "#EEF5FF",
     },
     {
       key: "sos",
-      label: "SOS",
+      labelKey: "home.actions.sos",
       icon: "alert-circle-outline",
       color: COLORS.danger,
       bg: "#FEF2F2",
     },
     {
       key: "meetings",
-      label: "Meetings",
+      labelKey: "home.actions.meetings",
       icon: "people-outline",
       color: COLORS.primary,
       bg: "#EEF5FF",
     },
     {
       key: "complaints",
-      label: "Complaints",
+      labelKey: "home.actions.complaints",
       icon: "chatbox-ellipses-outline",
       color: COLORS.primary,
       bg: "#EEF5FF",
@@ -113,14 +125,14 @@ function getActionsByRole(role) {
   const cashierExtraActions = [
     {
       key: "raiseExpense",
-      label: "Raise\nExpense",
+      labelKey: "home.actions.raiseExpense",
       icon: "add-circle-outline",
       color: COLORS.danger,
       bg: "#FEF2F2",
     },
     {
       key: "defaulters",
-      label: "Get\nDefaulters",
+      labelKey: "home.actions.defaulters",
       icon: "people-outline",
       color: COLORS.cyan,
       bg: "#ECFEFF",
@@ -130,35 +142,35 @@ function getActionsByRole(role) {
   const adminExtraActions = [
     {
       key: "openingBalance",
-      label: "Opening\nBalance",
+      labelKey: "home.actions.openingBalance",
       icon: "cash-outline",
       color: COLORS.success,
       bg: "#EAFBF0",
     },
     {
       key: "paymentRequest",
-      label: "Payment\nRequest",
+      labelKey: "home.actions.paymentRequest",
       icon: "document-text-outline",
       color: COLORS.warning,
       bg: "#FFF3E8",
     },
     {
       key: "raiseExpense",
-      label: "Raise\nExpense",
+      labelKey: "home.actions.raiseExpense",
       icon: "add-circle-outline",
       color: COLORS.danger,
       bg: "#FEF2F2",
     },
     {
       key: "defaulters",
-      label: "Get\nDefaulters",
+      labelKey: "home.actions.defaulters",
       icon: "people-outline",
       color: COLORS.cyan,
       bg: "#ECFEFF",
     },
     {
       key: "manageUsers",
-      label: "Manage\nUsers",
+      labelKey: "home.actions.manageUsers",
       icon: "people-circle-outline",
       color: COLORS.primary,
       bg: "#EEF5FF",

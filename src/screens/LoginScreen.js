@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+
 import {
   View,
   Text,
@@ -8,22 +9,22 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from "react-native";
 
-import { sendOtp } from "../api/authApi";
 import { SafeAreaView } from "react-native-safe-area-context";
-export default function LoginScreen({ navigation }) {
+import { Ionicons } from "@expo/vector-icons";
 
+import { sendOtp } from "../api/authApi";
+import { t } from "../i18n";
+
+export default function LoginScreen({ navigation }) {
   const [mobile, setMobile] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // -------------------------
-  // SEND OTP
-  // -------------------------
   const handleSendOtp = async () => {
-
     if (mobile.length !== 10) {
-      alert("Please enter valid 10 digit mobile number");
+      Alert.alert("Invalid Mobile", t("login.invalidMobile"));
       return;
     }
 
@@ -37,131 +38,202 @@ export default function LoginScreen({ navigation }) {
           phoneNumber: mobile,
         });
       } else {
-        alert(response.data.message);
+        Alert.alert(
+          t("common.error"),
+          response.data.message || "Unable to send OTP"
+        );
       }
-
     } catch (error) {
       console.log("API ERROR:", error);
-      alert("Unable to connect to server");
+      Alert.alert(t("common.error"), t("login.unableToConnect"));
     } finally {
       setLoading(false);
     }
   };
-  /*const handleSendOtp = async () => {
 
-  try {
-
-    const res = await fetch(
-      "http://192.168.1.13:8080/api/auth/test"
-    );
-
-    const data = await res.text();
-
-    console.log("FETCH RESULT:", data);
-
-  } catch (e) {
-    console.log("FETCH FAILED:", e);
-  }
-
-};*/
-
-  // -------------------------
-  // UI
-  // -------------------------
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
+        <View style={styles.logoBox}>
+          <Ionicons name="business-outline" size={42} color="#2563EB" />
+        </View>
+
+        <Text style={styles.title}>{t("login.welcomeBack")}</Text>
+
+        <Text style={styles.subtitle}>{t("login.subtitle")}</Text>
+
         <View style={styles.card}>
+          <Text style={styles.label}>{t("login.mobileNumber")}</Text>
 
-          <Text style={styles.title}>Apartment App</Text>
+          <View style={styles.inputRow}>
+            <View style={styles.countryBox}>
+              <Text style={styles.countryText}>+91</Text>
+            </View>
 
-          <Text style={styles.subtitle}>
-            Login using Mobile Number
-          </Text>
-
-          <TextInput
-            style={styles.input}
-            placeholder="Enter Mobile Number"
-            keyboardType="phone-pad"
-            maxLength={10}
-            value={mobile}
-            onChangeText={(text) =>
-              setMobile(text.replace(/[^0-9]/g, ""))
-            }
-          />
+            <TextInput
+              style={styles.input}
+              placeholder={t("login.enterMobile")}
+              placeholderTextColor="#9CA3AF"
+              keyboardType="phone-pad"
+              maxLength={10}
+              value={mobile}
+              onChangeText={(text) =>
+                setMobile(text.replace(/[^0-9]/g, ""))
+              }
+            />
+          </View>
 
           <TouchableOpacity
-            style={styles.button}
+            style={[
+              styles.button,
+              mobile.length !== 10 && styles.buttonDisabled,
+            ]}
             onPress={handleSendOtp}
             disabled={loading}
+            activeOpacity={0.85}
           >
             {loading ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color="#FFFFFF" />
             ) : (
-              <Text style={styles.buttonText}>Send OTP</Text>
+              <>
+                <Text style={styles.buttonText}>{t("login.sendOtp")}</Text>
+                <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
+              </>
             )}
           </TouchableOpacity>
 
+          <Text style={styles.footerText}>{t("login.otpInfo")}</Text>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
-// -------------------------
-// STYLES
-// -------------------------
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
-    backgroundColor: "#f2f4f8",
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: "#F5F7FB",
   },
 
-  card: {
-    width: "85%",
-    backgroundColor: "#fff",
-    padding: 25,
-    borderRadius: 12,
-    elevation: 5,
+  container: {
+    flex: 1,
+    paddingHorizontal: 24,
+    justifyContent: "center",
+  },
+
+  logoBox: {
+    width: 82,
+    height: 82,
+    borderRadius: 28,
+    backgroundColor: "#EEF5FF",
+    alignItems: "center",
+    justifyContent: "center",
+    alignSelf: "center",
+    marginBottom: 22,
   },
 
   title: {
-    fontSize: 26,
-    fontWeight: "bold",
+    fontSize: 32,
+    fontWeight: "900",
+    color: "#111827",
     textAlign: "center",
-    marginBottom: 10,
   },
 
   subtitle: {
+    fontSize: 15,
+    color: "#6B7280",
     textAlign: "center",
-    marginBottom: 20,
-    color: "#666",
+    lineHeight: 22,
+    marginTop: 10,
+    marginBottom: 28,
+    fontWeight: "600",
+  },
+
+  card: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 26,
+    padding: 22,
+    shadowColor: "#000",
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    elevation: 5,
+  },
+
+  label: {
+    fontSize: 14,
+    color: "#374151",
+    fontWeight: "900",
+    marginBottom: 10,
+  },
+
+  inputRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1.5,
+    borderColor: "#D1D5DB",
+    borderRadius: 18,
+    backgroundColor: "#F9FAFB",
+    marginBottom: 18,
+    overflow: "hidden",
+  },
+
+  countryBox: {
+    paddingHorizontal: 14,
+    borderRightWidth: 1,
+    borderRightColor: "#E5E7EB",
+    height: 54,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  countryText: {
+    fontSize: 16,
+    color: "#111827",
+    fontWeight: "900",
   },
 
   input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    marginBottom: 20,
+    flex: 1,
+    height: 54,
+    paddingHorizontal: 14,
+    fontSize: 17,
+    color: "#111827",
+    fontWeight: "700",
   },
 
   button: {
-    backgroundColor: "#007bff",
-    padding: 15,
-    borderRadius: 8,
+    backgroundColor: "#2563EB",
+    borderRadius: 18,
+    height: 56,
     alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+  },
+
+  buttonDisabled: {
+    opacity: 0.75,
   },
 
   buttonText: {
-    color: "#fff",
+    color: "#FFFFFF",
     fontSize: 16,
-    fontWeight: "bold",
+    fontWeight: "900",
+    marginRight: 8,
+  },
+
+  footerText: {
+    fontSize: 12,
+    color: "#6B7280",
+    textAlign: "center",
+    marginTop: 16,
+    lineHeight: 18,
+    fontWeight: "600",
   },
 });

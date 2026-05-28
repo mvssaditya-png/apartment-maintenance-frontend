@@ -10,6 +10,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 
 import { COLORS } from "../common/theme";
+import { t } from "../../i18n";
 
 export default function HomeHeader({
   user,
@@ -26,7 +27,7 @@ export default function HomeHeader({
     user?.flatNumber ||
     user?.flatNo ||
     "";
-console.log("HOME HEADER USER => ", user);
+
   return (
     <View style={styles.container}>
       <View style={styles.leftSection}>
@@ -34,7 +35,10 @@ console.log("HOME HEADER USER => ", user);
           {greeting}
         </Text>
 
-        <Text style={styles.userName}>
+        <Text
+          style={styles.userName}
+          numberOfLines={1}
+        >
           {userName}
         </Text>
 
@@ -47,8 +51,11 @@ console.log("HOME HEADER USER => ", user);
                 color={COLORS.primary}
               />
 
-              <Text style={styles.flatText}>
-                Flat {flatNumber}
+              <Text
+                style={styles.flatText}
+                numberOfLines={1}
+              >
+                {t("home.flat")} {flatNumber}
               </Text>
             </View>
           ) : null}
@@ -61,7 +68,10 @@ console.log("HOME HEADER USER => ", user);
                 color={COLORS.purple}
               />
 
-              <Text style={styles.apartmentText}>
+              <Text
+                style={styles.apartmentText}
+                numberOfLines={1}
+              >
                 {user.siteName}
               </Text>
             </View>
@@ -121,14 +131,21 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
 
+  infoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
+  },
+
   flatContainer: {
     flexDirection: "row",
     alignItems: "center",
-    alignSelf: "flex-start",
     backgroundColor: "#EEF5FF",
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 999,
+    marginRight: 8,
+    marginBottom: 8,
   },
 
   flatText: {
@@ -136,6 +153,26 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: COLORS.primary,
     fontWeight: "700",
+  },
+
+  apartmentContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F3E8FF",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    marginBottom: 8,
+    maxWidth: "100%",
+    flexShrink: 1,
+  },
+
+  apartmentText: {
+    marginLeft: 5,
+    fontSize: 12,
+    color: COLORS.purple,
+    fontWeight: "700",
+    flexShrink: 1,
   },
 
   notificationButton: {
@@ -167,28 +204,4 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: "900",
   },
-  infoRow: {
-  flexDirection: "row",
-  alignItems: "center",
-  flexWrap: "wrap",
-},
-
-apartmentContainer: {
-  flexDirection: "row",
-  alignItems: "center",
-  alignSelf: "flex-start",
-  backgroundColor: "#F3E8FF",
-  paddingHorizontal: 10,
-  paddingVertical: 6,
-  borderRadius: 999,
-  marginLeft: 8,
-  marginTop: 8,
-},
-
-apartmentText: {
-  marginLeft: 5,
-  fontSize: 12,
-  color: COLORS.purple,
-  fontWeight: "700",
-},
 });

@@ -21,6 +21,8 @@ import EmptyState from "../components/common/EmptyState";
 import StatusBadge from "../components/common/StatusBadge";
 import { COLORS } from "../components/common/theme";
 
+import { t } from "../i18n";
+
 export default function MyDuesScreen({ navigation }) {
   const [dues, setDues] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -66,7 +68,10 @@ export default function MyDuesScreen({ navigation }) {
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.loaderContainer}>
           <ActivityIndicator size="large" color={COLORS.primary} />
-          <Text style={styles.loaderText}>Loading dues...</Text>
+
+          <Text style={styles.loaderText}>
+            {t("myDues.loadingDues")}
+          </Text>
         </View>
       </SafeAreaView>
     );
@@ -89,41 +94,53 @@ export default function MyDuesScreen({ navigation }) {
         <View style={styles.summaryCard}>
           <View style={styles.summaryTop}>
             <View>
-              <Text style={styles.summaryLabel}>Total Pending Due</Text>
+              <Text style={styles.summaryLabel}>
+                {t("myDues.totalPendingDue")}
+              </Text>
+
               <Text style={styles.summaryAmount}>
                 ₹{formatAmount(totalPending)}
               </Text>
             </View>
 
             <View style={styles.summaryIconBox}>
-              <Ionicons name="wallet-outline" size={30} color={COLORS.white} />
+              <Ionicons
+                name="wallet-outline"
+                size={30}
+                color={COLORS.white}
+              />
             </View>
           </View>
 
           <View style={styles.summaryFooter}>
             <Text style={styles.summarySubText}>
-              Includes maintenance and special requests
+              {t("myDues.includesMaintenance")}
             </Text>
 
             <View style={styles.countPill}>
               <Text style={styles.countPillText}>
-                {pendingCount} Pending
+                {pendingCount} {t("myDues.pending")}
               </Text>
             </View>
           </View>
         </View>
 
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>My Dues</Text>
-          <Text style={styles.sectionCount}>{dues.length} Requests</Text>
+          <Text style={styles.sectionTitle}>
+            {t("myDues.title")}
+          </Text>
+
+          <Text style={styles.sectionCount}>
+            {dues.length} {t("myDues.requests")}
+          </Text>
         </View>
 
         {dues.length === 0 ? (
           <AppCard>
             <EmptyState
               icon="checkmark-circle-outline"
-              title="No dues found"
-              subtitle="You do not have any pending dues right now."
+              title={t("myDues.noDues")}
+              subtitle={t("myDues.noPending")}
             />
           </AppCard>
         ) : (
@@ -160,16 +177,22 @@ function DueCard({ item, onPay }) {
     <AppCard style={styles.dueCard}>
       <View style={styles.cardTop}>
         <View style={styles.iconBox}>
-          <Ionicons name={iconName} size={24} color={COLORS.primary} />
+          <Ionicons
+            name={iconName}
+            size={24}
+            color={COLORS.primary}
+          />
         </View>
 
         <View style={styles.cardTitleBlock}>
           <Text style={styles.cardTitle}>
-            {item.requestType || "Payment Request"}
+            {item.requestType ||
+              t("myDues.paymentRequest")}
           </Text>
 
           <Text style={styles.cardSubtitle}>
-            {getMonthName(item.paymentMonth)} {item.paymentYear}
+            {getMonthName(item.paymentMonth)}{" "}
+            {item.paymentYear}
           </Text>
         </View>
 
@@ -178,25 +201,39 @@ function DueCard({ item, onPay }) {
 
       <View style={styles.amountRow}>
         <View>
-          <Text style={styles.amountLabel}>Amount</Text>
-          <Text style={styles.amount}>₹{formatAmount(item.amount)}</Text>
+          <Text style={styles.amountLabel}>
+            {t("myDues.amount")}
+          </Text>
+
+          <Text style={styles.amount}>
+            ₹{formatAmount(item.amount)}
+          </Text>
         </View>
 
         {isPending ? (
           <AppButton
-            title="Pay Now"
+            title={t("myDues.payNow")}
             onPress={onPay}
             style={styles.payButton}
           />
         ) : (
-          <Text style={styles.noActionText}>{status}</Text>
+          <Text style={styles.noActionText}>
+            {status}
+          </Text>
         )}
       </View>
 
       <View style={styles.footerRow}>
         <View style={styles.footerItem}>
-          <Ionicons name="document-text-outline" size={14} color={COLORS.textMuted} />
-          <Text style={styles.footerText}>Payment ID</Text>
+          <Ionicons
+            name="document-text-outline"
+            size={14}
+            color={COLORS.textMuted}
+          />
+
+          <Text style={styles.footerText}>
+            {t("myDues.paymentId")}
+          </Text>
         </View>
 
         <Text style={styles.footerValue}>
@@ -228,7 +265,11 @@ function getMonthName(monthNumber) {
 }
 
 function formatAmount(value) {
-  if (value === null || value === undefined || value === "") {
+  if (
+    value === null ||
+    value === undefined ||
+    value === ""
+  ) {
     return "0";
   }
 

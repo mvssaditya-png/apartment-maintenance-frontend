@@ -30,3 +30,13 @@ export const updateUser = async (userId, data) => {
 
   return response.data;
 };
+
+export const getOwnersBySite = async (siteId) => {
+  console.log("GET OWNERS SITE ID:", siteId);
+
+  const response = await API.get(`/admin/users/site/${siteId}/owners`);
+
+  console.log("GET OWNERS RESPONSE:", response.data);
+
+  return response.data;
+};

@@ -7,50 +7,54 @@ import { Ionicons } from "@expo/vector-icons";
 import AppCard from "../common/AppCard";
 import { COLORS } from "../common/theme";
 
+import { t } from "../../i18n";
+
 export default function RecentActivity({ dashboard }) {
   return (
     <>
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Recent Activity</Text>
+        <Text style={styles.sectionTitle}>
+          {t("home.recentActivity")}
+        </Text>
       </View>
 
       <AppCard style={styles.card}>
         <ActivityItem
           icon="checkmark-circle-outline"
-          title="Payments Collected"
-          subtitle="Total paid flats this month"
-          amount={`${dashboard?.paidFlats ?? 0} flats`}
-          status="Paid"
+          title={t("home.activity.paymentsCollected")}
+          subtitle={t("home.activity.totalPaidFlats")}
+          amount={`${dashboard?.paidFlats ?? 0} ${t("home.flats")}`}
+          status={t("home.activity.paid")}
           statusColor={COLORS.success}
           statusBg="#DCFCE7"
         />
 
         <ActivityItem
           icon="time-outline"
-          title="Pending Flats"
-          subtitle="Flats with pending dues"
-          amount={`${dashboard?.pendingFlats ?? 0} flats`}
-          status="Pending"
+          title={t("home.activity.pendingFlats")}
+          subtitle={t("home.activity.flatsWithPendingDues")}
+          amount={`${dashboard?.pendingFlats ?? 0} ${t("home.flats")}`}
+          status={t("home.activity.pending")}
           statusColor={COLORS.warning}
           statusBg="#FFEDD5"
         />
 
         <ActivityItem
           icon="sparkles-outline"
-          title="Special Requests"
-          subtitle="Collected this month"
+          title={t("home.activity.specialRequests")}
+          subtitle={t("home.activity.collectedThisMonth")}
           amount={`₹${formatAmount(dashboard?.specialRequestCollected)}`}
-          status="Collected"
+          status={t("home.activity.collected")}
           statusColor={COLORS.purple}
           statusBg="#F3E8FF"
         />
 
         <ActivityItem
           icon="business-outline"
-          title="Total Flats"
-          subtitle="Registered flats in society"
+          title={t("home.activity.totalFlats")}
+          subtitle={t("home.activity.registeredFlats")}
           amount={`${dashboard?.totalFlats ?? 0}`}
-          status="Info"
+          status={t("home.activity.info")}
           statusColor={COLORS.primary}
           statusBg="#DBEAFE"
           hideBorder

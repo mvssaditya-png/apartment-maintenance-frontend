@@ -1,4 +1,5 @@
 import React, { useCallback, useContext, useState } from "react";
+
 import {
   View,
   Text,
@@ -8,6 +9,7 @@ import {
   ActivityIndicator,
   Alert,
 } from "react-native";
+
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
@@ -15,12 +17,20 @@ import { Ionicons } from "@expo/vector-icons";
 import { getLoggedInUser, getMySite } from "../api/dashboardApi";
 import { AuthContext } from "../context/AuthContext";
 
+import AppCard from "../components/common/AppCard";
+import { COLORS } from "../components/common/theme";
+import { LanguageContext } from "../context/LanguageContext";
+import {
+  t
+} from "../i18n";
+
 export default function ProfileScreen() {
   const { logout } = useContext(AuthContext);
 
   const [user, setUser] = useState(null);
   const [site, setSite] = useState(null);
   const [loading, setLoading] = useState(true);
+  const { language, changeLanguage } = useContext(LanguageContext);
 
   useFocusEffect(
     useCallback(() => {
@@ -46,14 +56,21 @@ export default function ProfileScreen() {
     }
   };
 
+  const handleLanguageChange = async (lang) => {
+    try {
+      await changeLanguage(lang);
+    } catch (error) {
+      console.log("LANGUAGE CHANGE ERROR:", error);
+    }
+  };
   const handleLogout = () => {
-    Alert.alert("Logout", "Are you sure you want to logout?", [
+    Alert.alert(t("profile.logout"), t("profile.logoutConfirm"), [
       {
-        text: "Cancel",
+        text: t("common.cancel"),
         style: "cancel",
       },
       {
-        text: "Logout",
+        text: t("profile.logout"),
         style: "destructive",
         onPress: logout,
       },
@@ -62,10 +79,10 @@ export default function ProfileScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
         <View style={styles.loaderContainer}>
-          <ActivityIndicator size="large" color="#2563EB" />
-          <Text style={styles.loaderText}>Loading profile...</Text>
+          <ActivityIndicator size="large" color={COLORS.primary} />
+          <Text style={styles.loaderText}>{t("common.loading")}</Text>
         </View>
       </SafeAreaView>
     );
@@ -73,9 +90,33 @@ export default function ProfileScreen() {
 
   const initials = getInitials(user?.name);
 
+  const residentType =
+    user?.residentType ||
+    user?.resident_type ||
+    null;
+
+  const flatNumber =
+    user?.flatNumber ||
+    user?.flat_number ||
+    "-";
+
+  const phoneNumber =
+    user?.phoneNumber ||
+    user?.phone_number ||
+    "-";
+
+  const siteName =
+    site?.siteName ||
+    site?.site_name ||
+    user?.siteName ||
+    "-";
+
   return (
-    <SafeAreaView style={styles.safeArea} edges={["top"]}>
-      <ScrollView contentContainerStyle={styles.container}>
+    <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
+      <ScrollView
+        contentContainerStyle={styles.container}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.headerCard}>
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>{initials}</Text>
@@ -83,101 +124,188 @@ export default function ProfileScreen() {
 
           <Text style={styles.name}>{user?.name || "User"}</Text>
 
-          <View style={styles.rolePill}>
-            <Text style={styles.roleText}>{user?.role || "-"}</Text>
+          <View style={styles.badgeRow}>
+            <View style={styles.rolePill}>
+              <Text style={styles.roleText}>{user?.role || "-"}</Text>
+            </View>
+
+            {residentType ? (
+              <View style={styles.typePill}>
+                <Text style={styles.typeText}>{residentType}</Text>
+              </View>
+            ) : null}
           </View>
 
-          <Text style={styles.flatText}>
-            Flat {user?.flatNumber || user?.flat_number || "-"}
-          </Text>
+          <View style={styles.flatPill}>
+            <Ionicons name="home-outline" size={15} color="#DBEAFE" />
+            <Text style={styles.flatText}>Flat {flatNumber}</Text>
+          </View>
         </View>
 
-        <Text style={styles.sectionTitle}>User Details</Text>
+        <Text style={styles.sectionTitle}>{t("profile.userDetails")}</Text>
 
-        <View style={styles.card}>
+        <AppCard style={styles.card}>
           <InfoRow
             icon="call-outline"
-            label="Phone Number"
-            value={user?.phoneNumber || user?.phone_number || "-"}
+            label={t("profile.phoneNumber")}
+            value={phoneNumber}
           />
 
           <InfoRow
             icon="mail-outline"
-            label="Email"
+            label={t("profile.email")}
             value={user?.email || "-"}
           />
 
           <InfoRow
             icon="person-outline"
-            label="Role"
+            label={t("profile.role")}
             value={user?.role || "-"}
           />
 
+          {residentType ? (
+            <InfoRow
+              icon="people-outline"
+              label={t("profile.residentType")}
+              value={residentType}
+            />
+          ) : null}
+
           <InfoRow
             icon="home-outline"
-            label="Flat Number"
-            value={user?.flatNumber || user?.flat_number || "-"}
+            label={t("profile.flatNumber")}
+            value={flatNumber}
+            hideBorder={!isTenant(user)}
           />
-        </View>
 
-        <Text style={styles.sectionTitle}>Society Details</Text>
+          {isTenant(user) ? (
+            <>
+              <InfoRow
+                icon="person-circle-outline"
+                label={t("profile.ownerName")}
+                value={user?.ownerName || "-"}
+              />
 
-        <View style={styles.card}>
+              <InfoRow
+                icon="call-outline"
+                label={t("profile.ownerPhone")}
+                value={user?.ownerPhoneNumber || "-"}
+                hideBorder
+              />
+            </>
+          ) : null}
+        </AppCard>
+
+        <Text style={styles.sectionTitle}>{t("profile.societyDetails")}</Text>
+
+        <AppCard style={styles.card}>
           <InfoRow
             icon="business-outline"
-            label="Society Name"
-            value={site?.siteName || site?.site_name || "-"}
+            label={t("profile.societyName")}
+            value={siteName}
           />
 
           <InfoRow
             icon="location-outline"
-            label="Address"
+            label={t("profile.address")}
             value={site?.address || "-"}
           />
 
           <InfoRow
             icon="albums-outline"
-            label="Total Flats"
+            label={t("profile.totalFlats")}
             value={String(site?.totalFlats ?? "-")}
+            hideBorder
           />
-        </View>
+        </AppCard>
 
-        <Text style={styles.sectionTitle}>App</Text>
+        <Text style={styles.sectionTitle}>Language</Text>
 
-        <View style={styles.card}>
+        <AppCard style={styles.card}>
+          <View style={styles.languageRow}>
+            <LanguageButton
+              title="English"
+              active={language === "en"}
+              onPress={() => handleLanguageChange("en")}
+            />
+
+            <LanguageButton
+              title="తెలుగు"
+              active={language === "te"}
+              onPress={() => handleLanguageChange("te")}
+            />
+
+            <LanguageButton
+              title="हिन्दी"
+              active={language === "hi"}
+              onPress={() => handleLanguageChange("hi")}
+            />
+          </View>
+        </AppCard>
+
+        <Text style={styles.sectionTitle}>{t("profile.app")}</Text>
+
+        <AppCard style={styles.card}>
           <InfoRow
             icon="information-circle-outline"
-            label="App Version"
+            label={t("profile.appVersion")}
             value="1.0.0"
           />
 
           <InfoRow
             icon="shield-checkmark-outline"
-            label="Privacy"
+            label={t("profile.privacy")}
             value="Coming soon"
           />
 
           <InfoRow
             icon="help-circle-outline"
-            label="Support"
+            label={t("profile.support")}
             value="Coming soon"
+            hideBorder
           />
-        </View>
+        </AppCard>
 
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+        <TouchableOpacity
+          style={styles.logoutButton}
+          onPress={handleLogout}
+          activeOpacity={0.85}
+        >
           <Ionicons name="log-out-outline" size={22} color="#FFFFFF" />
-          <Text style={styles.logoutText}>Logout</Text>
+          <Text style={styles.logoutText}>{t("profile.logout")}</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-function InfoRow({ icon, label, value }) {
+function LanguageButton({ title, active, onPress }) {
   return (
-    <View style={styles.infoRow}>
+    <TouchableOpacity
+      style={[
+        styles.languageButton,
+        active && styles.languageButtonActive,
+      ]}
+      onPress={onPress}
+      activeOpacity={0.85}
+    >
+      <Text
+        style={[
+          styles.languageText,
+          active && styles.languageTextActive,
+        ]}
+      >
+        {title}
+      </Text>
+    </TouchableOpacity>
+  );
+}
+
+function InfoRow({ icon, label, value, hideBorder = false }) {
+  return (
+    <View style={[styles.infoRow, hideBorder && styles.noBorder]}>
       <View style={styles.infoIconBox}>
-        <Ionicons name={icon} size={20} color="#2563EB" />
+        <Ionicons name={icon} size={20} color={COLORS.primary} />
       </View>
 
       <View style={styles.infoTextBlock}>
@@ -188,8 +316,19 @@ function InfoRow({ icon, label, value }) {
   );
 }
 
+function isTenant(user) {
+  const residentType =
+    user?.residentType ||
+    user?.resident_type ||
+    "";
+
+  return residentType.toUpperCase() === "TENANT";
+}
+
 function getInitials(name) {
-  if (!name) return "U";
+  if (!name) {
+    return "U";
+  }
 
   return name
     .split(" ")
@@ -202,12 +341,13 @@ function getInitials(name) {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#F5F7FB",
+    backgroundColor: COLORS.background,
   },
 
   container: {
-    padding: 18,
-    paddingBottom: 100,
+    paddingHorizontal: 18,
+    paddingTop: 18,
+    paddingBottom: 120,
   },
 
   loaderContainer: {
@@ -218,14 +358,16 @@ const styles = StyleSheet.create({
 
   loaderText: {
     marginTop: 10,
-    color: "#6B7280",
+    color: COLORS.textMuted,
+    fontWeight: "600",
   },
 
   headerCard: {
-    backgroundColor: "#2563EB",
-    borderRadius: 24,
+    backgroundColor: COLORS.primary,
+    borderRadius: 28,
     padding: 24,
     alignItems: "center",
+    marginTop: 8,
     marginBottom: 24,
   },
 
@@ -242,65 +384,97 @@ const styles = StyleSheet.create({
   avatarText: {
     fontSize: 28,
     fontWeight: "900",
-    color: "#2563EB",
+    color: COLORS.primary,
   },
 
   name: {
-    fontSize: 24,
+    fontSize: 25,
     fontWeight: "900",
     color: "#FFFFFF",
+    textAlign: "center",
+  },
+
+  badgeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 12,
+    flexWrap: "wrap",
+    justifyContent: "center",
   },
 
   rolePill: {
     backgroundColor: "rgba(255,255,255,0.2)",
     paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 16,
-    marginTop: 10,
+    paddingVertical: 7,
+    borderRadius: 999,
+    marginHorizontal: 4,
+    marginBottom: 8,
   },
 
   roleText: {
     color: "#FFFFFF",
-    fontWeight: "800",
+    fontWeight: "900",
     fontSize: 12,
+  },
+
+  typePill: {
+    backgroundColor: "rgba(255,255,255,0.2)",
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 999,
+    marginHorizontal: 4,
+    marginBottom: 8,
+  },
+
+  typeText: {
+    color: "#FFFFFF",
+    fontWeight: "900",
+    fontSize: 12,
+  },
+
+  flatPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 4,
   },
 
   flatText: {
     color: "#DBEAFE",
-    marginTop: 10,
+    marginLeft: 5,
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: "800",
   },
 
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 21,
     fontWeight: "900",
-    color: "#111827",
+    color: COLORS.text,
     marginBottom: 12,
   },
 
   card: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 18,
-    padding: 14,
     marginBottom: 22,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
+    borderRadius: 22,
+    paddingVertical: 4,
   },
 
   infoRow: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 12,
+    paddingVertical: 13,
     borderBottomWidth: 1,
-    borderBottomColor: "#F3F4F6",
+    borderBottomColor: COLORS.borderLight,
+  },
+
+  noBorder: {
+    borderBottomWidth: 0,
   },
 
   infoIconBox: {
-    width: 42,
-    height: 42,
-    borderRadius: 14,
-    backgroundColor: "#EEF4FF",
+    width: 44,
+    height: 44,
+    borderRadius: 15,
+    backgroundColor: "#EEF5FF",
     alignItems: "center",
     justifyContent: "center",
     marginRight: 12,
@@ -312,15 +486,45 @@ const styles = StyleSheet.create({
 
   infoLabel: {
     fontSize: 12,
-    color: "#6B7280",
+    color: COLORS.textMuted,
     fontWeight: "700",
   },
 
   infoValue: {
     fontSize: 15,
-    color: "#111827",
-    fontWeight: "800",
+    color: COLORS.text,
+    fontWeight: "900",
     marginTop: 3,
+  },
+
+  languageRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+
+  languageButton: {
+    flex: 1,
+    borderWidth: 1.5,
+    borderColor: "#D1D5DB",
+    borderRadius: 14,
+    paddingVertical: 12,
+    marginHorizontal: 4,
+    alignItems: "center",
+  },
+
+  languageButtonActive: {
+    backgroundColor: COLORS.primary,
+    borderColor: COLORS.primary,
+  },
+
+  languageText: {
+    color: "#374151",
+    fontWeight: "900",
+    fontSize: 13,
+  },
+
+  languageTextActive: {
+    color: "#FFFFFF",
   },
 
   logoutButton: {

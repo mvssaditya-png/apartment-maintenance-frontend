@@ -27,7 +27,7 @@ import OverviewStats from "../components/home/OverviewStats";
 import RecentActivity from "../components/home/RecentActivity";
 
 import { COLORS } from "../components/common/theme";
-
+import { t } from "../i18n";
 export default function HomeScreen({ navigation }) {
   const [user, setUser] = useState(null);
   const [dashboard, setDashboard] = useState(null);
@@ -48,18 +48,18 @@ export default function HomeScreen({ navigation }) {
     const hour = new Date().getHours();
 
     if (hour >= 5 && hour < 12) {
-      return "Good Morning";
+      return t("home.goodMorning");
     }
 
     if (hour >= 12 && hour < 17) {
-      return "Good Afternoon";
+      return t("home.goodAfternoon");
     }
 
     if (hour >= 17 && hour < 21) {
-      return "Good Evening";
+      return t("home.goodEvening");
     }
 
-    return "Good Night";
+    return t("home.goodNight");
   };
 
   const loadHomeData = async () => {
@@ -137,7 +137,9 @@ export default function HomeScreen({ navigation }) {
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.loaderContainer}>
           <ActivityIndicator size="large" color={COLORS.primary} />
-          <Text style={styles.loaderText}>Loading dashboard...</Text>
+          <Text style={styles.loaderText}>
+            {t("home.loadingDashboard")}
+          </Text>
         </View>
       </SafeAreaView>
     );
@@ -189,7 +191,7 @@ const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 18,
     paddingTop: 12,
-    paddingBottom: 100,
+    paddingBottom: 90,
   },
 
   loaderContainer: {

@@ -1,11 +1,21 @@
-import React from "react";
+import React, { useContext } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 import AppCard from "../common/AppCard";
 import { COLORS } from "../common/theme";
 
+import { t } from "../../i18n";
+import { LanguageContext } from "../../context/LanguageContext";
+
 export default function OverviewStats({ summary, dashboard }) {
+  // IMPORTANT:
+  // This makes component re-render on language change
+  const { language } = useContext(LanguageContext);
+
+  // Prevent unused variable warning
+  const currentLanguage = language;
+
   const totalCollection =
     summary?.totalCollection ??
     summary?.collection ??
@@ -33,13 +43,18 @@ export default function OverviewStats({ summary, dashboard }) {
   return (
     <>
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Overview</Text>
-        <Text style={styles.monthText}>This Month</Text>
+        <Text style={styles.sectionTitle}>
+          {t("home.overview")}
+        </Text>
+
+        <Text style={styles.monthText}>
+          {t("home.thisMonth")}
+        </Text>
       </View>
 
       <View style={styles.grid}>
         <StatCard
-          title="Paid This Month"
+          title={t("home.paidThisMonth")}
           amount={`₹${formatAmount(totalCollection)}`}
           icon="trending-up-outline"
           iconColor={COLORS.success}
@@ -47,7 +62,7 @@ export default function OverviewStats({ summary, dashboard }) {
         />
 
         <StatCard
-          title="Expenses"
+          title={t("home.expenses")}
           amount={`₹${formatAmount(totalExpenses)}`}
           icon="trending-down-outline"
           iconColor={COLORS.danger}
@@ -55,7 +70,7 @@ export default function OverviewStats({ summary, dashboard }) {
         />
 
         <StatCard
-          title="Opening Balance"
+          title={t("home.openingBalance")}
           amount={`₹${formatAmount(openingBalance)}`}
           icon="card-outline"
           iconColor={COLORS.primary}
@@ -63,7 +78,7 @@ export default function OverviewStats({ summary, dashboard }) {
         />
 
         <StatCard
-          title="Closing Balance"
+          title={t("home.closingBalance")}
           amount={`₹${formatAmount(closingBalance)}`}
           icon="pie-chart-outline"
           iconColor={COLORS.purple}
@@ -74,28 +89,53 @@ export default function OverviewStats({ summary, dashboard }) {
   );
 }
 
-function StatCard({ title, amount, icon, iconColor, bg }) {
+function StatCard({
+  title,
+  amount,
+  icon,
+  iconColor,
+  bg,
+}) {
   return (
     <AppCard style={styles.card}>
       <View style={styles.top}>
-        <Text style={styles.title}>{title}</Text>
+        <Text style={styles.title}>
+          {title}
+        </Text>
 
-        <View style={[styles.iconBox, { backgroundColor: bg }]}>
-          <Ionicons name={icon} size={20} color={iconColor} />
+        <View
+          style={[
+            styles.iconBox,
+            { backgroundColor: bg },
+          ]}
+        >
+          <Ionicons
+            name={icon}
+            size={20}
+            color={iconColor}
+          />
         </View>
       </View>
 
-      <Text style={styles.amount}>{amount}</Text>
+      <Text style={styles.amount}>
+        {amount}
+      </Text>
     </AppCard>
   );
 }
 
 function formatAmount(value) {
-  if (value === null || value === undefined || value === "") {
+  if (
+    value === null ||
+    value === undefined ||
+    value === ""
+  ) {
     return "0";
   }
 
-  return Number(value).toLocaleString("en-IN");
+  return Number(value).toLocaleString(
+    "en-IN"
+  );
 }
 
 const styles = StyleSheet.create({

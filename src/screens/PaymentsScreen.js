@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+
 import {
   View,
   Text,
@@ -6,13 +7,17 @@ import {
   TouchableOpacity,
   ScrollView,
 } from "react-native";
+
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { useEffect, useState } from "react";
+
 import { getLoggedInUser } from "../api/dashboardApi";
+import { t } from "../i18n";
+
 export default function PaymentsScreen({ navigation }) {
   const [user, setUser] = useState(null);
-    useEffect(() => {
+
+  useEffect(() => {
     loadUser();
   }, []);
 
@@ -24,26 +29,32 @@ export default function PaymentsScreen({ navigation }) {
       console.log("LOAD USER ERROR:", error?.response?.data || error);
     }
   };
+
   const isAdmin =
-  user?.role?.toUpperCase() === "ADMIN";
+    user?.role?.toUpperCase() === "ADMIN";
+
   const isAdminOrCashier =
-  user?.role?.toUpperCase() === "ADMIN" ||
-  user?.role?.toUpperCase() === "CASHIER";
+    user?.role?.toUpperCase() === "ADMIN" ||
+    user?.role?.toUpperCase() === "CASHIER";
+
   return (
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
       <ScrollView
         contentContainerStyle={styles.container}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.heading}>Payments</Text>
+        <Text style={styles.heading}>
+          {t("payments.title")}
+        </Text>
+
         <Text style={styles.subtitle}>
-          Manage dues, submitted payments and approvals.
+          {t("payments.subtitle")}
         </Text>
 
         <PaymentCard
           icon="wallet-outline"
-          title="My Dues"
-          subtitle="View pending dues and submit payment"
+          title={t("payments.myDues")}
+          subtitle={t("payments.myDuesSubtitle")}
           color="#2563EB"
           bg="#EEF4FF"
           onPress={() => navigation.navigate("MyDues")}
@@ -51,27 +62,29 @@ export default function PaymentsScreen({ navigation }) {
 
         <PaymentCard
           icon="receipt-outline"
-          title="Submitted Payments"
-          subtitle="View submitted payments and approvals"
+          title={t("payments.submittedPayments")}
+          subtitle={t("payments.submittedPaymentsSubtitle")}
           color="#16A34A"
           bg="#EAF8EE"
           onPress={() => navigation.navigate("SubmittedPayments")}
         />
+
         {isAdmin && (
           <PaymentCard
             icon="calendar-outline"
-            title="Scheduled Payment Request"
-            subtitle="Automate monthly maintenance generation"
+            title={t("payments.scheduledPaymentRequest")}
+            subtitle={t("payments.scheduledPaymentRequestSubtitle")}
             color="#7C3AED"
             bg="#F3E8FF"
             onPress={() => navigation.navigate("ScheduledPaymentRequests")}
           />
         )}
+
         {isAdmin && (
           <PaymentCard
             icon="document-text-outline"
-            title="Create Payment Request"
-            subtitle="Generate maintenance or special request"
+            title={t("payments.createPaymentRequest")}
+            subtitle={t("payments.createPaymentRequestSubtitle")}
             color="#F97316"
             bg="#FFF3EA"
             onPress={() => navigation.navigate("PaymentRequest")}
@@ -81,8 +94,8 @@ export default function PaymentsScreen({ navigation }) {
         {isAdminOrCashier && (
           <PaymentCard
             icon="create-outline"
-            title="Record Payment"
-            subtitle="Record payment for any flat"
+            title={t("payments.recordPayment")}
+            subtitle={t("payments.recordPaymentSubtitle")}
             color="#0891B2"
             bg="#ECFEFF"
             onPress={() => navigation.navigate("RecordPayment")}
@@ -91,8 +104,8 @@ export default function PaymentsScreen({ navigation }) {
 
         <PaymentCard
           icon="time-outline"
-          title="Payment History"
-          subtitle="Flat-wise charges, payments and balance"
+          title={t("payments.paymentHistory")}
+          subtitle={t("payments.paymentHistorySubtitle")}
           color="#7C3AED"
           bg="#F3E8FF"
           onPress={() => navigation.navigate("PaymentHistory")}

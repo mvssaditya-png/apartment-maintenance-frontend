@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from "react";
+
 import {
   View,
   Text,
@@ -13,13 +14,16 @@ import {
   Platform,
   ScrollView,
 } from "react-native";
+
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
+import { Ionicons } from "@expo/vector-icons";
 
 import FlatSelector from "../components/common/FlatSelector";
 
 import {
   getUsersBySite,
+  getOwnersBySite,
   createUser,
   updateUser,
 } from "../api/adminUserApi";
@@ -31,8 +35,11 @@ import {
 
 export default function AdminUsersScreen() {
   const [users, setUsers] = useState([]);
+  const [owners, setOwners] = useState([]);
   const [flats, setFlats] = useState([]);
+
   const [selectedFlat, setSelectedFlat] = useState(null);
+  const [selectedOwner, setSelectedOwner] = useState(null);
   const [siteId, setSiteId] = useState(null);
 
   const [loading, setLoading] = useState(false);
@@ -45,7 +52,8 @@ export default function AdminUsersScreen() {
     name: "",
     phoneNumber: "",
     email: "",
-    role: "USER",
+    role: "RESIDENT",
+    residentType: "OWNER",
     isActive: true,
   });
 
@@ -57,11 +65,14 @@ export default function AdminUsersScreen() {
 
   const resetForm = () => {
     setSelectedFlat(null);
+    setSelectedOwner(null);
+
     setForm({
       name: "",
       phoneNumber: "",
       email: "",
-      role: "USER",
+      role: "RESIDENT",
+      residentType: "OWNER",
       isActive: true,
     });
   };
@@ -72,7 +83,6 @@ export default function AdminUsersScreen() {
 
       const userResult = await getLoggedInUser();
       const loggedInUser = userResult.data;
-
       const currentSiteId = loggedInUser?.siteId;
 
       if (!currentSiteId) {
@@ -82,12 +92,14 @@ export default function AdminUsersScreen() {
 
       setSiteId(currentSiteId);
 
-      const [usersData, flatsResult] = await Promise.all([
+      const [usersData, ownersData, flatsResult] = await Promise.all([
         getUsersBySite(currentSiteId),
+        getOwnersBySite(currentSiteId),
         getFlatOptions(),
       ]);
 
       setUsers(Array.isArray(usersData) ? usersData : []);
+      setOwners(Array.isArray(ownersData) ? ownersData : []);
       setFlats(flatsResult.data || []);
     } catch (error) {
       console.log("LOAD USERS ERROR:", error?.response?.data || error);
@@ -116,24 +128,44 @@ export default function AdminUsersScreen() {
       flat || {
         flatId: user.flatId,
         flatNumber: user.flatNumber,
-        ownerName: user.name,
       }
     );
+
+    const owner = owners.find((o) => o.userId === user.ownerUserId);
+
+    setSelectedOwner(owner || null);
 
     setForm({
       name: user?.name || "",
       phoneNumber: user?.phoneNumber || "",
       email: user?.email || "",
-      role: user?.role || "USER",
+      role: user?.role || "RESIDENT",
+      residentType: user?.residentType || "OWNER",
       isActive: user?.isActive ?? true,
     });
 
     setModalVisible(true);
   };
 
+  const handleFlatSelect = (flat) => {
+    setSelectedFlat(flat);
+    setSelectedOwner(null);
+  };
+
+  const handleResidentTypeChange = (residentType) => {
+    setForm({
+      ...form,
+      residentType,
+    });
+
+    if (residentType === "OWNER") {
+      setSelectedOwner(null);
+    }
+  };
+
   const saveUser = async () => {
     if (!siteId) {
-      Alert.alert("Error", "Site ID missing");
+      Alert.alert("Validation", "Site ID missing");
       return;
     }
 
@@ -152,8 +184,18 @@ export default function AdminUsersScreen() {
       return;
     }
 
-    if (!form.email.trim()) {
-      Alert.alert("Validation", "Email is required");
+    if (!form.role) {
+      Alert.alert("Validation", "Please select role");
+      return;
+    }
+
+    if (!form.residentType) {
+      Alert.alert("Validation", "Please select resident type");
+      return;
+    }
+
+    if (form.residentType === "TENANT" && !selectedOwner?.userId) {
+      Alert.alert("Validation", "Please select owner for tenant");
       return;
     }
 
@@ -163,8 +205,11 @@ export default function AdminUsersScreen() {
       flatNumber: selectedFlat.flatNumber,
       name: form.name.trim(),
       phoneNumber: form.phoneNumber.trim(),
-      email: form.email.trim(),
+      email: form.email?.trim() || null,
       role: form.role,
+      residentType: form.residentType,
+      ownerUserId:
+        form.residentType === "TENANT" ? selectedOwner.userId : null,
       isActive: form.isActive,
     };
 
@@ -195,32 +240,98 @@ export default function AdminUsersScreen() {
     }
   };
 
+  const filteredOwners = owners.filter((owner) => {
+    if (!selectedFlat?.flatId) {
+      return false;
+    }
+
+    if (editingUser?.userId && owner.userId === editingUser.userId) {
+      return false;
+    }
+
+    return owner.flatId === selectedFlat.flatId;
+  });
+
   const renderUser = ({ item }) => (
     <TouchableOpacity
       style={styles.card}
       onPress={() => openEditModal(item)}
-      activeOpacity={0.85}
+      activeOpacity={0.9}
     >
-      <Text style={styles.name}>{item.name}</Text>
-      <Text style={styles.info}>Flat: {item.flatNumber || "-"}</Text>
-      <Text style={styles.info}>Phone: {item.phoneNumber}</Text>
-      <Text style={styles.info}>Email: {item.email}</Text>
+      <View style={styles.userTopRow}>
+        <View style={styles.avatar}>
+          <Text style={styles.avatarText}>
+            {item.name?.charAt(0)?.toUpperCase() || "U"}
+          </Text>
+        </View>
 
-      <View style={styles.row}>
-        <Text style={styles.role}>{item.role}</Text>
-        <Text style={item.isActive ? styles.active : styles.inactive}>
-          {item.isActive ? "Active" : "Inactive"}
-        </Text>
+        <View style={styles.userTitleBlock}>
+          <Text style={styles.name}>{item.name}</Text>
+
+          <Text style={styles.flatInfo}>
+            Flat {item.flatNumber || "-"}
+          </Text>
+        </View>
+
+        <View
+          style={[
+            styles.statusBadge,
+            item.isActive ? styles.activeBadge : styles.inactiveBadge,
+          ]}
+        >
+          <Text
+            style={[
+              styles.statusBadgeText,
+              item.isActive ? styles.activeBadgeText : styles.inactiveBadgeText,
+            ]}
+          >
+            {item.isActive ? "ACTIVE" : "INACTIVE"}
+          </Text>
+        </View>
+      </View>
+
+      <View style={styles.infoSection}>
+        <InfoItem icon="call-outline" value={item.phoneNumber || "-"} />
+
+        {item.email ? (
+          <InfoItem icon="mail-outline" value={item.email} />
+        ) : null}
+
+        <InfoItem icon="shield-outline" value={item.role || "-"} />
+
+        {item.residentType ? (
+          <InfoItem
+            icon="people-outline"
+            value={
+              item.ownerName
+                ? `${item.residentType} • Owner: ${item.ownerName}`
+                : item.residentType
+            }
+          />
+        ) : null}
       </View>
     </TouchableOpacity>
   );
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={["top"]}>
+    <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
       <View style={styles.container}>
-        <TouchableOpacity style={styles.addButton} onPress={openAddModal}>
-          <Text style={styles.addButtonText}>+ Add User</Text>
-        </TouchableOpacity>
+        <View style={styles.headerRow}>
+          <View>
+            <Text style={styles.heading}>Manage Users</Text>
+            <Text style={styles.subtitle}>
+              Add, edit and manage residents
+            </Text>
+          </View>
+
+          <TouchableOpacity
+            style={styles.addIconButton}
+            onPress={openAddModal}
+            activeOpacity={0.85}
+          >
+            <Ionicons name="add" size={26} color="#FFFFFF" />
+          </TouchableOpacity>
+        </View>
 
         {loading ? (
           <View style={styles.loaderBox}>
@@ -231,10 +342,11 @@ export default function AdminUsersScreen() {
           <FlatList
             data={users}
             keyExtractor={(item, index) =>
-            `${item.userId || item.phoneNumber || item.flatId}-${index}`
+              `${item.userId || item.phoneNumber || item.flatId}-${index}`
             }
             renderItem={renderUser}
             showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.listContent}
             ListEmptyComponent={
               <Text style={styles.emptyText}>No users found</Text>
             }
@@ -256,14 +368,35 @@ export default function AdminUsersScreen() {
                 keyboardShouldPersistTaps="handled"
                 showsVerticalScrollIndicator={false}
               >
-                <Text style={styles.modalTitle}>
-                  {editingUser ? "Edit User" : "Add User"}
-                </Text>
+                <View style={styles.modalHeader}>
+                  <View>
+                    <Text style={styles.modalTitle}>
+                      {editingUser ? "Edit User" : "Add User"}
+                    </Text>
+
+                    <Text style={styles.modalSubtitle}>
+                      {editingUser
+                        ? "Update resident details"
+                        : "Create a new resident profile"}
+                    </Text>
+                  </View>
+
+                  <TouchableOpacity
+                    style={styles.closeButton}
+                    onPress={() => setModalVisible(false)}
+                    disabled={saving}
+                    activeOpacity={0.85}
+                  >
+                    <Ionicons name="close" size={24} color="#111827" />
+                  </TouchableOpacity>
+                </View>
+
+                <Text style={styles.label}>Flat</Text>
 
                 <FlatSelector
                   flats={flats}
                   selectedFlat={selectedFlat}
-                  onSelectFlat={setSelectedFlat}
+                  onSelectFlat={handleFlatSelect}
                 />
 
                 <TextInput
@@ -287,7 +420,7 @@ export default function AdminUsersScreen() {
 
                 <TextInput
                   style={styles.input}
-                  placeholder="Email"
+                  placeholder="Email Optional"
                   placeholderTextColor="#9CA3AF"
                   keyboardType="email-address"
                   autoCapitalize="none"
@@ -297,20 +430,21 @@ export default function AdminUsersScreen() {
 
                 <Text style={styles.label}>Role</Text>
 
-                <View style={styles.roleRow}>
+                <View style={styles.chipRow}>
                   {["RESIDENT", "CASHIER", "ADMIN"].map((role) => (
                     <TouchableOpacity
                       key={role}
                       style={[
-                        styles.roleButton,
-                        form.role === role && styles.selectedRole,
+                        styles.chipButton,
+                        form.role === role && styles.selectedChip,
                       ]}
                       onPress={() => setForm({ ...form, role })}
+                      activeOpacity={0.85}
                     >
                       <Text
                         style={[
-                          styles.roleButtonText,
-                          form.role === role && styles.selectedRoleText,
+                          styles.chipText,
+                          form.role === role && styles.selectedChipText,
                         ]}
                       >
                         {role}
@@ -319,14 +453,125 @@ export default function AdminUsersScreen() {
                   ))}
                 </View>
 
+                <Text style={styles.label}>Resident Type</Text>
+
+                <View style={styles.chipRow}>
+                  {["OWNER", "TENANT"].map((type) => (
+                    <TouchableOpacity
+                      key={type}
+                      style={[
+                        styles.chipButton,
+                        form.residentType === type && styles.selectedChip,
+                      ]}
+                      onPress={() => handleResidentTypeChange(type)}
+                      activeOpacity={0.85}
+                    >
+                      <Text
+                        style={[
+                          styles.chipText,
+                          form.residentType === type && styles.selectedChipText,
+                        ]}
+                      >
+                        {type}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                {form.residentType === "TENANT" && (
+                  <>
+                    <Text style={styles.label}>Select Owner</Text>
+
+                    {!selectedFlat?.flatId ? (
+                      <Text style={styles.helperText}>
+                        Please select flat first.
+                      </Text>
+                    ) : filteredOwners.length === 0 ? (
+                      <Text style={styles.helperText}>
+                        No owner found for this flat. Please create owner first.
+                      </Text>
+                    ) : (
+                      <View style={styles.ownerList}>
+                        {filteredOwners.map((owner) => (
+                          <TouchableOpacity
+                            key={owner.userId}
+                            style={[
+                              styles.ownerCard,
+                              selectedOwner?.userId === owner.userId &&
+                                styles.ownerCardActive,
+                            ]}
+                            onPress={() => setSelectedOwner(owner)}
+                            activeOpacity={0.85}
+                          >
+                            <View style={styles.ownerIconBox}>
+                              <Ionicons
+                                name="person-outline"
+                                size={20}
+                                color={
+                                  selectedOwner?.userId === owner.userId
+                                    ? "#FFFFFF"
+                                    : "#2563EB"
+                                }
+                              />
+                            </View>
+
+                            <View style={{ flex: 1 }}>
+                              <Text
+                                style={[
+                                  styles.ownerName,
+                                  selectedOwner?.userId === owner.userId &&
+                                    styles.ownerNameActive,
+                                ]}
+                              >
+                                {owner.name}
+                              </Text>
+
+                              <Text
+                                style={[
+                                  styles.ownerInfo,
+                                  selectedOwner?.userId === owner.userId &&
+                                    styles.ownerInfoActive,
+                                ]}
+                              >
+                                Flat {owner.flatNumber} • {owner.phoneNumber}
+                              </Text>
+                            </View>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    )}
+                  </>
+                )}
+
                 <TouchableOpacity
-                  style={styles.statusButton}
+                  style={[
+                    styles.statusButton,
+                    form.isActive ? styles.statusActive : styles.statusInactive,
+                  ]}
                   onPress={() =>
                     setForm({ ...form, isActive: !form.isActive })
                   }
+                  activeOpacity={0.85}
                 >
-                  <Text style={styles.statusText}>
-                    Status: {form.isActive ? "Active" : "Inactive"}
+                  <Ionicons
+                    name={
+                      form.isActive
+                        ? "checkmark-circle-outline"
+                        : "close-circle-outline"
+                    }
+                    size={21}
+                    color={form.isActive ? "#16A34A" : "#DC2626"}
+                  />
+
+                  <Text
+                    style={[
+                      styles.statusText,
+                      form.isActive
+                        ? styles.statusTextActive
+                        : styles.statusTextInactive,
+                    ]}
+                  >
+                    {form.isActive ? "Active User" : "Inactive User"}
                   </Text>
                 </TouchableOpacity>
 
@@ -334,6 +579,7 @@ export default function AdminUsersScreen() {
                   style={styles.saveButton}
                   onPress={saveUser}
                   disabled={saving}
+                  activeOpacity={0.85}
                 >
                   {saving ? (
                     <ActivityIndicator color="#FFFFFF" />
@@ -348,6 +594,7 @@ export default function AdminUsersScreen() {
                   style={styles.cancelButton}
                   onPress={() => setModalVisible(false)}
                   disabled={saving}
+                  activeOpacity={0.85}
                 >
                   <Text style={styles.cancelButtonText}>Cancel</Text>
                 </TouchableOpacity>
@@ -360,6 +607,16 @@ export default function AdminUsersScreen() {
   );
 }
 
+function InfoItem({ icon, value }) {
+  return (
+    <View style={styles.infoItem}>
+      <Ionicons name={icon} size={16} color="#6B7280" />
+
+      <Text style={styles.infoItemText}>{value}</Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
@@ -368,22 +625,43 @@ const styles = StyleSheet.create({
 
   container: {
     flex: 1,
-    padding: 18,
+    paddingHorizontal: 18,
+    paddingTop: 0,
     backgroundColor: "#F5F7FB",
   },
 
-  addButton: {
-    backgroundColor: "#2563EB",
-    paddingVertical: 15,
-    borderRadius: 14,
-    marginBottom: 16,
+  headerRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 6,
+    marginBottom: 18,
   },
 
-  addButtonText: {
-    color: "#FFFFFF",
-    textAlign: "center",
+  heading: {
+    fontSize: 28,
     fontWeight: "900",
-    fontSize: 16,
+    color: "#111827",
+  },
+
+  subtitle: {
+    fontSize: 14,
+    color: "#6B7280",
+    fontWeight: "600",
+    marginTop: 4,
+  },
+
+  addIconButton: {
+    width: 52,
+    height: 52,
+    borderRadius: 18,
+    backgroundColor: "#2563EB",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  listContent: {
+    paddingBottom: 100,
   },
 
   loaderBox: {
@@ -407,46 +685,102 @@ const styles = StyleSheet.create({
 
   card: {
     backgroundColor: "#FFFFFF",
+    borderRadius: 22,
+    padding: 18,
+    marginBottom: 14,
+    shadowColor: "#000",
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
+    elevation: 3,
+  },
+
+  userTopRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  avatar: {
+    width: 54,
+    height: 54,
     borderRadius: 18,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
+    backgroundColor: "#EEF4FF",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 14,
+  },
+
+  avatarText: {
+    color: "#2563EB",
+    fontWeight: "900",
+    fontSize: 20,
+  },
+
+  userTitleBlock: {
+    flex: 1,
+    paddingRight: 8,
   },
 
   name: {
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: "900",
     color: "#111827",
-    marginBottom: 6,
   },
 
-  info: {
-    fontSize: 14,
-    color: "#4B5563",
-    marginBottom: 4,
-    fontWeight: "500",
+  flatInfo: {
+    color: "#6B7280",
+    fontWeight: "700",
+    marginTop: 4,
   },
 
-  row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 8,
+  statusBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 999,
   },
 
-  role: {
-    color: "#2563EB",
+  activeBadge: {
+    backgroundColor: "#DCFCE7",
+  },
+
+  inactiveBadge: {
+    backgroundColor: "#FEE2E2",
+  },
+
+  statusBadgeText: {
+    fontSize: 11,
     fontWeight: "900",
   },
 
-  active: {
-    color: "#16A34A",
-    fontWeight: "900",
+  activeBadgeText: {
+    color: "#15803D",
   },
 
-  inactive: {
+  inactiveBadgeText: {
     color: "#DC2626",
-    fontWeight: "900",
+  },
+
+  infoSection: {
+    marginTop: 16,
+    paddingTop: 14,
+    borderTopWidth: 1,
+    borderTopColor: "#F3F4F6",
+  },
+
+  infoItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+
+  infoItemText: {
+    marginLeft: 8,
+    color: "#374151",
+    fontWeight: "600",
+    fontSize: 14,
   },
 
   modalSafeArea: {
@@ -456,16 +790,38 @@ const styles = StyleSheet.create({
 
   modalContainer: {
     paddingHorizontal: 20,
-    paddingTop: Platform.OS === "ios" ? 60 : 30,
+    paddingTop: Platform.OS === "ios" ? 28 : 22,
     paddingBottom: 40,
     backgroundColor: "#FFFFFF",
   },
 
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 22,
+  },
+
   modalTitle: {
-    fontSize: 26,
+    fontSize: 28,
     fontWeight: "900",
     color: "#111827",
-    marginBottom: 22,
+  },
+
+  modalSubtitle: {
+    color: "#6B7280",
+    fontSize: 14,
+    fontWeight: "600",
+    marginTop: 4,
+  },
+
+  closeButton: {
+    width: 42,
+    height: 42,
+    borderRadius: 15,
+    backgroundColor: "#F3F4F6",
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   input: {
@@ -481,60 +837,134 @@ const styles = StyleSheet.create({
   },
 
   label: {
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: "900",
     color: "#111827",
     marginBottom: 10,
   },
 
-  roleRow: {
+  chipRow: {
     flexDirection: "row",
     flexWrap: "wrap",
     marginBottom: 18,
   },
 
-  roleButton: {
+  chipButton: {
     borderWidth: 1.5,
     borderColor: "#2563EB",
-    paddingHorizontal: 18,
-    paddingVertical: 12,
-    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 11,
+    borderRadius: 14,
     marginRight: 10,
     marginBottom: 10,
   },
 
-  selectedRole: {
+  selectedChip: {
     backgroundColor: "#2563EB",
   },
 
-  roleButtonText: {
+  chipText: {
     color: "#2563EB",
     fontWeight: "900",
-    fontSize: 15,
+    fontSize: 14,
   },
 
-  selectedRoleText: {
+  selectedChipText: {
     color: "#FFFFFF",
+  },
+
+  ownerList: {
+    marginBottom: 18,
+  },
+
+  ownerCard: {
+    borderWidth: 1,
+    borderColor: "#D1D5DB",
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 10,
+    backgroundColor: "#FFFFFF",
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  ownerCardActive: {
+    backgroundColor: "#2563EB",
+    borderColor: "#2563EB",
+  },
+
+  ownerIconBox: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    backgroundColor: "rgba(37,99,235,0.12)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
+  },
+
+  ownerName: {
+    fontSize: 15,
+    fontWeight: "900",
+    color: "#111827",
+  },
+
+  ownerNameActive: {
+    color: "#FFFFFF",
+  },
+
+  ownerInfo: {
+    fontSize: 13,
+    color: "#6B7280",
+    marginTop: 4,
+    fontWeight: "600",
+  },
+
+  ownerInfoActive: {
+    color: "#DBEAFE",
+  },
+
+  helperText: {
+    color: "#DC2626",
+    fontWeight: "700",
+    marginBottom: 18,
   },
 
   statusButton: {
     paddingVertical: 15,
-    backgroundColor: "#E5E7EB",
-    borderRadius: 14,
+    borderRadius: 16,
     marginBottom: 16,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  statusActive: {
+    backgroundColor: "#DCFCE7",
+  },
+
+  statusInactive: {
+    backgroundColor: "#FEE2E2",
   },
 
   statusText: {
-    textAlign: "center",
+    marginLeft: 8,
     fontWeight: "900",
-    color: "#111827",
-    fontSize: 16,
+    fontSize: 15,
+  },
+
+  statusTextActive: {
+    color: "#15803D",
+  },
+
+  statusTextInactive: {
+    color: "#DC2626",
   },
 
   saveButton: {
     backgroundColor: "#059669",
     paddingVertical: 16,
-    borderRadius: 14,
+    borderRadius: 16,
     marginBottom: 14,
   },
 
@@ -548,7 +978,7 @@ const styles = StyleSheet.create({
   cancelButton: {
     backgroundColor: "#9CA3AF",
     paddingVertical: 16,
-    borderRadius: 14,
+    borderRadius: 16,
   },
 
   cancelButtonText: {

@@ -8,7 +8,6 @@ import {
   ActivityIndicator,
   RefreshControl,
   Alert,
-  TouchableOpacity,
 } from "react-native";
 
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -112,6 +111,7 @@ export default function DefaultersScreen() {
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.loaderContainer}>
           <ActivityIndicator size="large" color={COLORS.primary} />
+
           <Text style={styles.loaderText}>Loading defaulters...</Text>
         </View>
       </SafeAreaView>
@@ -185,26 +185,54 @@ export default function DefaultersScreen() {
                     {item.ownerName || "Resident"}
                   </Text>
                 </View>
-
-                <View style={styles.badge}>
-                  <Text style={styles.badgeText}>
-                    {item.pendingMonths || 0} month
-                    {Number(item.pendingMonths || 0) > 1 ? "s" : ""}
-                  </Text>
-                </View>
               </View>
 
-              <View style={styles.amountRow}>
-                <View>
-                  <Text style={styles.amountLabel}>Total Due</Text>
+              <View style={styles.breakupContainer}>
+                <DueBreakup
+                  title="Maintenance"
+                  pending={formatMonthCount(item.maintenancePendingMonths)}
+                  amount={item.maintenanceDue}
+                  icon="construct-outline"
+                  iconColor="#2563EB"
+                  iconBg="#EEF5FF"
+                />
 
-                  <Text style={styles.amount}>
+                <DueBreakup
+                  title="Special Requests"
+                  pending={formatRequestCount(item.specialRequestCount)}
+                  amount={item.specialRequestDue}
+                  icon="sparkles-outline"
+                  iconColor="#7C3AED"
+                  iconBg="#F3E8FF"
+                />
+
+                {Number(item.otherPendingCount || 0) > 0 ? (
+                  <DueBreakup
+                    title="Other"
+                    pending={formatItemCount(item.otherPendingCount)}
+                    amount={item.otherDue}
+                    icon="document-text-outline"
+                    iconColor="#F97316"
+                    iconBg="#FFEDD5"
+                  />
+                ) : null}
+              </View>
+
+              <View style={styles.totalRow}>
+                <View>
+                  <Text style={styles.totalLabel}>Total Due</Text>
+
+                  <Text style={styles.totalAmount}>
                     ₹{formatAmount(item.totalDue)}
                   </Text>
                 </View>
 
                 <View style={styles.alertCircle}>
-                  <Ionicons name="alert-circle-outline" size={22} color="#DC2626" />
+                  <Ionicons
+                    name="alert-circle-outline"
+                    size={24}
+                    color="#DC2626"
+                  />
                 </View>
               </View>
             </AppCard>
@@ -213,6 +241,50 @@ export default function DefaultersScreen() {
       </ScrollView>
     </SafeAreaView>
   );
+}
+
+function DueBreakup({
+  title,
+  pending,
+  amount,
+  icon,
+  iconColor,
+  iconBg,
+}) {
+  return (
+    <View style={styles.breakupRow}>
+      <View style={styles.breakupLeft}>
+        <View style={[styles.breakupIconBox, { backgroundColor: iconBg }]}>
+          <Ionicons name={icon} size={19} color={iconColor} />
+        </View>
+
+        <View>
+          <Text style={styles.breakupTitle}>{title}</Text>
+          <Text style={styles.breakupPending}>Pending: {pending}</Text>
+        </View>
+      </View>
+
+      <Text style={styles.breakupAmount}>₹{formatAmount(amount)}</Text>
+    </View>
+  );
+}
+
+function formatMonthCount(value) {
+  const count = Number(value || 0);
+
+  return `${count} month${count === 1 ? "" : "s"}`;
+}
+
+function formatRequestCount(value) {
+  const count = Number(value || 0);
+
+  return `${count} request${count === 1 ? "" : "s"}`;
+}
+
+function formatItemCount(value) {
+  const count = Number(value || 0);
+
+  return `${count} item${count === 1 ? "" : "s"}`;
 }
 
 function formatAmount(value) {
@@ -343,20 +415,56 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 
-  badge: {
-    backgroundColor: "#FEE2E2",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 999,
+  breakupContainer: {
+    marginTop: 18,
+    borderRadius: 18,
+    backgroundColor: "#F9FAFB",
+    padding: 12,
   },
 
-  badgeText: {
-    color: "#DC2626",
-    fontSize: 11,
+  breakupRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 10,
+  },
+
+  breakupLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+    paddingRight: 10,
+  },
+
+  breakupIconBox: {
+    width: 40,
+    height: 40,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 10,
+  },
+
+  breakupTitle: {
+    fontSize: 14,
     fontWeight: "900",
+    color: COLORS.text,
   },
 
-  amountRow: {
+  breakupPending: {
+    fontSize: 12,
+    color: COLORS.textMuted,
+    marginTop: 3,
+    fontWeight: "600",
+  },
+
+  breakupAmount: {
+    fontSize: 14,
+    fontWeight: "900",
+    color: COLORS.textSecondary,
+  },
+
+  totalRow: {
     marginTop: 16,
     paddingTop: 14,
     borderTopWidth: 1,
@@ -366,23 +474,23 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
-  amountLabel: {
+  totalLabel: {
     fontSize: 13,
     color: COLORS.textMuted,
     fontWeight: "700",
   },
 
-  amount: {
-    fontSize: 24,
+  totalAmount: {
+    fontSize: 26,
     fontWeight: "900",
     color: "#DC2626",
     marginTop: 4,
   },
 
   alertCircle: {
-    width: 42,
-    height: 42,
-    borderRadius: 15,
+    width: 44,
+    height: 44,
+    borderRadius: 16,
     backgroundColor: "#FEF2F2",
     alignItems: "center",
     justifyContent: "center",

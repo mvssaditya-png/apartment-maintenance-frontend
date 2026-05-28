@@ -12,6 +12,8 @@ import AppCard from "../common/AppCard";
 import AppButton from "../common/AppButton";
 import { COLORS } from "../common/theme";
 
+import { t } from "../../i18n";
+
 export default function BalanceCard({
   currentBalance,
   totalDue,
@@ -29,7 +31,9 @@ export default function BalanceCard({
         </View>
 
         <View style={styles.balanceBlock}>
-          <Text style={styles.label}>Society Balance</Text>
+          <Text style={styles.label}>
+            {t("home.societyBalance")}
+          </Text>
 
           <Text style={styles.balance}>
             ₹{formatAmount(currentBalance)}
@@ -41,7 +45,9 @@ export default function BalanceCard({
 
       <View style={styles.bottomRow}>
         <View style={styles.dueBlock}>
-          <Text style={styles.label}>My Due</Text>
+          <Text style={styles.label}>
+            {t("home.myDue")}
+          </Text>
 
           <Text style={styles.due}>
             ₹{formatAmount(totalDue)}
@@ -49,7 +55,7 @@ export default function BalanceCard({
         </View>
 
         <AppButton
-          title="Pay Now"
+          title={t("home.payNow")}
           onPress={onPayPress}
           style={styles.payButton}
         />
