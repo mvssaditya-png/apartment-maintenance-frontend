@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useContext, useEffect, useState } from "react";
+
 import {
   View,
   Text,
@@ -7,12 +8,14 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
-  Image,
 } from "react-native";
+
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
+
 import FlatSelector from "../components/common/FlatSelector";
+
 import {
   getFlatOptions,
   getFlatPendingPayments,
@@ -22,9 +25,14 @@ import {
 
 import ImagePreviewModal from "../components/common/ImagePreviewModal";
 
+import { t } from "../i18n";
+import { LanguageContext } from "../context/LanguageContext";
+
 const PAYMENT_MODES = ["UPI", "BANK_TRANSFER", "CASH", "CHEQUE"];
 
 export default function RecordPaymentScreen({ navigation }) {
+  const { language } = useContext(LanguageContext);
+
   const [flats, setFlats] = useState([]);
   const [selectedFlat, setSelectedFlat] = useState(null);
   const [pendingPayments, setPendingPayments] = useState([]);
@@ -42,11 +50,17 @@ export default function RecordPaymentScreen({ navigation }) {
   const loadFlats = async () => {
     try {
       setLoading(true);
+
       const res = await getFlatOptions();
+
       setFlats(res.data || []);
     } catch (error) {
       console.log("LOAD FLATS ERROR:", error?.response?.data || error);
-      Alert.alert("Error", "Unable to load flats.");
+
+      Alert.alert(
+        t("common.error"),
+        t("recordPayment.loadFlatsFailed")
+      );
     } finally {
       setLoading(false);
     }
@@ -59,10 +73,15 @@ export default function RecordPaymentScreen({ navigation }) {
       setPendingPayments([]);
 
       const res = await getFlatPendingPayments(flat.flatId);
+
       setPendingPayments(res.data || []);
     } catch (error) {
       console.log("LOAD FLAT PAYMENTS ERROR:", error?.response?.data || error);
-      Alert.alert("Error", "Unable to load pending payments.");
+
+      Alert.alert(
+        t("common.error"),
+        t("recordPayment.loadPendingFailed")
+      );
     }
   };
 
@@ -70,7 +89,10 @@ export default function RecordPaymentScreen({ navigation }) {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
     if (!permission.granted) {
-      Alert.alert("Permission Required", "Please allow gallery access.");
+      Alert.alert(
+        t("submitPayment.permissionRequired"),
+        t("submitPayment.allowGalleryAccess")
+      );
       return;
     }
 
@@ -86,12 +108,18 @@ export default function RecordPaymentScreen({ navigation }) {
 
   const handleRecordPayment = async () => {
     if (!selectedFlat) {
-      Alert.alert("Validation Error", "Please select a flat.");
+      Alert.alert(
+        t("addExpense.validationError"),
+        t("recordPayment.selectFlat")
+      );
       return;
     }
 
     if (!selectedPayment) {
-      Alert.alert("Validation Error", "Please select a pending payment.");
+      Alert.alert(
+        t("addExpense.validationError"),
+        t("recordPayment.selectPendingPayment")
+      );
       return;
     }
 
@@ -111,15 +139,23 @@ export default function RecordPaymentScreen({ navigation }) {
         receiptUrl,
       });
 
-      Alert.alert("Success", "Payment recorded successfully.", [
-        {
-          text: "OK",
-          onPress: () => navigation.goBack(),
-        },
-      ]);
+      Alert.alert(
+        t("common.success"),
+        t("recordPayment.recordSuccess"),
+        [
+          {
+            text: "OK",
+            onPress: () => navigation.goBack(),
+          },
+        ]
+      );
     } catch (error) {
       console.log("RECORD PAYMENT ERROR:", error?.response?.data || error);
-      Alert.alert("Error", "Unable to record payment.");
+
+      Alert.alert(
+        t("common.error"),
+        t("recordPayment.recordFailed")
+      );
     } finally {
       setSubmitLoading(false);
     }
@@ -130,7 +166,10 @@ export default function RecordPaymentScreen({ navigation }) {
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.loaderContainer}>
           <ActivityIndicator size="large" color="#2563EB" />
-          <Text style={styles.loaderText}>Loading flats...</Text>
+
+          <Text style={styles.loaderText}>
+            {t("recordPayment.loadingFlats")}
+          </Text>
         </View>
       </SafeAreaView>
     );
@@ -139,24 +178,31 @@ export default function RecordPaymentScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.safeArea} edges={["bottom"]}>
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.heading}>Record Payment</Text>
+        <Text style={styles.heading}>
+          {t("recordPayment.title")}
+        </Text>
+
         <Text style={styles.subtitle}>
-          Select flat, choose pending due and record payment directly.
+          {t("recordPayment.subtitle")}
         </Text>
 
         <FlatSelector
-            flats={flats}
-            selectedFlat={selectedFlat}
-            onSelectFlat={loadPendingPayments}
-            />
+          flats={flats}
+          selectedFlat={selectedFlat}
+          onSelectFlat={loadPendingPayments}
+        />
 
         {selectedFlat && (
           <>
-            <Text style={styles.sectionTitle}>Pending Payments</Text>
+            <Text style={styles.sectionTitle}>
+              {t("recordPayment.pendingPayments")}
+            </Text>
 
             {pendingPayments.length === 0 ? (
               <View style={styles.emptyCard}>
-                <Text style={styles.emptyText}>No pending dues for this flat.</Text>
+                <Text style={styles.emptyText}>
+                  {t("recordPayment.noPendingDues")}
+                </Text>
               </View>
             ) : (
               pendingPayments.map((payment) => (
@@ -173,13 +219,16 @@ export default function RecordPaymentScreen({ navigation }) {
                     <Text style={styles.paymentTitle}>
                       {payment.requestType}
                     </Text>
+
                     <Text style={styles.paymentSub}>
-                      {getMonthName(payment.paymentMonth)} {payment.paymentYear} •{" "}
-                      {payment.paymentStatus}
+                      {getMonthName(payment.paymentMonth)}{" "}
+                      {payment.paymentYear} • {payment.paymentStatus}
                     </Text>
                   </View>
 
-                  <Text style={styles.amount}>₹{formatAmount(payment.amount)}</Text>
+                  <Text style={styles.amount}>
+                    ₹{formatAmount(payment.amount)}
+                  </Text>
                 </TouchableOpacity>
               ))
             )}
@@ -188,7 +237,9 @@ export default function RecordPaymentScreen({ navigation }) {
 
         {selectedPayment && (
           <>
-            <Text style={styles.sectionTitle}>Payment Mode</Text>
+            <Text style={styles.sectionTitle}>
+              {t("submitPayment.paymentMode")}
+            </Text>
 
             <View style={styles.modeGrid}>
               {PAYMENT_MODES.map((mode) => (
@@ -213,7 +264,9 @@ export default function RecordPaymentScreen({ navigation }) {
             </View>
 
             <View style={styles.card}>
-              <Text style={styles.label}>Receipt Image Optional</Text>
+              <Text style={styles.label}>
+                {t("addExpense.receiptImageOptional")}
+              </Text>
 
               <TouchableOpacity
                 style={styles.uploadBox}
@@ -228,14 +281,23 @@ export default function RecordPaymentScreen({ navigation }) {
                 {selectedImage ? (
                   <>
                     <Ionicons name="image-outline" size={34} color="#2563EB" />
-                    <Text style={styles.uploadTitle}>Receipt Selected</Text>
-                    <Text style={styles.uploadText}>Tap to preview image</Text>
+
+                    <Text style={styles.uploadTitle}>
+                      {t("submitPayment.receiptSelected")}
+                    </Text>
+
+                    <Text style={styles.uploadText}>
+                      {t("submitPayment.tapToPreview")}
+                    </Text>
                   </>
                 ) : (
                   <>
-                    <Text style={styles.uploadTitle}>Upload Receipt</Text>
+                    <Text style={styles.uploadTitle}>
+                      {t("addExpense.uploadReceipt")}
+                    </Text>
+
                     <Text style={styles.uploadText}>
-                      Select receipt image from gallery
+                      {t("addExpense.selectReceipt")}
                     </Text>
                   </>
                 )}
@@ -246,7 +308,9 @@ export default function RecordPaymentScreen({ navigation }) {
                   style={styles.changeButton}
                   onPress={pickImage}
                 >
-                  <Text style={styles.changeButtonText}>Change Image</Text>
+                  <Text style={styles.changeButtonText}>
+                    {t("complaints.changeImage")}
+                  </Text>
                 </TouchableOpacity>
               )}
 
@@ -258,7 +322,9 @@ export default function RecordPaymentScreen({ navigation }) {
                 {submitLoading ? (
                   <ActivityIndicator color="#FFFFFF" />
                 ) : (
-                  <Text style={styles.submitButtonText}>Record Payment</Text>
+                  <Text style={styles.submitButtonText}>
+                    {t("recordPayment.recordPayment")}
+                  </Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -277,6 +343,7 @@ export default function RecordPaymentScreen({ navigation }) {
 
 function formatAmount(value) {
   if (value === null || value === undefined || value === "") return "0";
+
   return Number(value).toLocaleString("en-IN");
 }
 
@@ -301,8 +368,22 @@ function getMonthName(monthNumber) {
 }
 
 function formatMode(mode) {
-  if (mode === "BANK_TRANSFER") return "Bank Transfer";
-  return mode;
+  switch (mode) {
+    case "UPI":
+      return t("submitPayment.upi");
+
+    case "BANK_TRANSFER":
+      return t("submitPayment.bankTransfer");
+
+    case "CASH":
+      return t("submitPayment.cash");
+
+    case "CHEQUE":
+      return t("submitPayment.cheque");
+
+    default:
+      return mode;
+  }
 }
 
 const styles = StyleSheet.create({
@@ -357,7 +438,7 @@ const styles = StyleSheet.create({
     borderColor: "#E5E7EB",
     marginBottom: 20,
   },
-  
+
   emptyCard: {
     backgroundColor: "#FFFFFF",
     borderRadius: 18,

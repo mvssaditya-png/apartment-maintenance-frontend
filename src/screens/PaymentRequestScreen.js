@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
+
 import {
   View,
   Text,
@@ -11,16 +12,20 @@ import {
   Platform,
   ScrollView,
 } from "react-native";
+
 import { SafeAreaView } from "react-native-safe-area-context";
+
 import { createPaymentRequest } from "../api/dashboardApi";
+import { t } from "../i18n";
+import { LanguageContext } from "../context/LanguageContext";
 
 const REQUEST_TYPES = [
   {
-    label: "Maintenance",
+    labelKey: "paymentRequest.maintenance",
     value: "Maintenance",
   },
   {
-    label: "Special Request",
+    labelKey: "paymentRequest.specialRequest",
     value: "Special Request",
   },
 ];
@@ -41,6 +46,8 @@ const MONTHS = [
 ];
 
 export default function PaymentRequestScreen({ navigation }) {
+  const { language } = useContext(LanguageContext);
+
   const currentDate = new Date();
 
   const [title, setTitle] = useState("Monthly Maintenance");
@@ -56,27 +63,42 @@ export default function PaymentRequestScreen({ navigation }) {
 
   const handleCreateRequest = async () => {
     if (!title.trim()) {
-      Alert.alert("Validation Error", "Please enter title.");
+      Alert.alert(
+        t("addExpense.validationError"),
+        t("paymentRequest.enterTitle")
+      );
       return;
     }
 
     if (!amount || Number(amount) <= 0) {
-      Alert.alert("Validation Error", "Please enter valid amount.");
+      Alert.alert(
+        t("addExpense.validationError"),
+        t("addExpense.enterValidAmount")
+      );
       return;
     }
 
     if (!paymentMonth || Number(paymentMonth) < 1 || Number(paymentMonth) > 12) {
-      Alert.alert("Validation Error", "Please select valid month.");
+      Alert.alert(
+        t("addExpense.validationError"),
+        t("paymentRequest.selectValidMonth")
+      );
       return;
     }
 
     if (!paymentYear || Number(paymentYear) < 2020) {
-      Alert.alert("Validation Error", "Please enter valid year.");
+      Alert.alert(
+        t("addExpense.validationError"),
+        t("paymentRequest.enterValidYear")
+      );
       return;
     }
 
     if (!dueDate.trim()) {
-      Alert.alert("Validation Error", "Please enter due date.");
+      Alert.alert(
+        t("addExpense.validationError"),
+        t("paymentRequest.enterDueDate")
+      );
       return;
     }
 
@@ -95,15 +117,23 @@ export default function PaymentRequestScreen({ navigation }) {
 
       await createPaymentRequest(payload);
 
-      Alert.alert("Success", "Payment request created successfully.", [
-        {
-          text: "OK",
-          onPress: () => navigation.goBack(),
-        },
-      ]);
+      Alert.alert(
+        t("common.success"),
+        t("paymentRequest.createSuccess"),
+        [
+          {
+            text: "OK",
+            onPress: () => navigation.goBack(),
+          },
+        ]
+      );
     } catch (error) {
       console.log("PAYMENT REQUEST ERROR:", error?.response?.data || error);
-      Alert.alert("Error", "Unable to create payment request.");
+
+      Alert.alert(
+        t("common.error"),
+        t("paymentRequest.createFailed")
+      );
     } finally {
       setLoading(false);
     }
@@ -119,41 +149,46 @@ export default function PaymentRequestScreen({ navigation }) {
           contentContainerStyle={styles.container}
           showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.title}>Create Payment Request</Text>
+          <Text style={styles.title}>
+            {t("paymentRequest.title")}
+          </Text>
 
           <Text style={styles.subtitle}>
-            Generate dues for residents. This can be used for monthly maintenance
-            or special society collections.
+            {t("paymentRequest.subtitle")}
           </Text>
 
           <View style={styles.card}>
-            <FieldLabel label="Title" />
+            <FieldLabel label={t("notices.noticeTitle")} />
+
             <TextInput
               style={styles.input}
-              placeholder="Example: May Maintenance"
+              placeholder={t("paymentRequest.titlePlaceholder")}
               value={title}
               onChangeText={setTitle}
             />
 
-            <FieldLabel label="Description" />
+            <FieldLabel label={t("addExpense.description")} />
+
             <TextInput
               style={[styles.input, styles.multiInput]}
-              placeholder="Example: Monthly maintenance"
+              placeholder={t("paymentRequest.descriptionPlaceholder")}
               value={description}
               onChangeText={setDescription}
               multiline
             />
 
-            <FieldLabel label="Amount" />
+            <FieldLabel label={t("addExpense.amount")} />
+
             <TextInput
               style={styles.input}
-              placeholder="Example: 2000"
+              placeholder={t("paymentRequest.amountPlaceholder")}
               keyboardType="numeric"
               value={amount}
               onChangeText={(text) => setAmount(text.replace(/[^0-9.]/g, ""))}
             />
 
-            <FieldLabel label="Request Type" />
+            <FieldLabel label={t("paymentRequest.requestType")} />
+
             <View style={styles.optionRow}>
               {REQUEST_TYPES.map((type) => (
                 <TouchableOpacity
@@ -170,13 +205,14 @@ export default function PaymentRequestScreen({ navigation }) {
                       requestType === type.value && styles.optionTextActive,
                     ]}
                   >
-                    {type.label}
+                    {t(type.labelKey)}
                   </Text>
                 </TouchableOpacity>
               ))}
             </View>
 
-            <FieldLabel label="Payment Month" />
+            <FieldLabel label={t("paymentRequest.paymentMonth")} />
+
             <View style={styles.monthGrid}>
               {MONTHS.map((month) => (
                 <TouchableOpacity
@@ -199,7 +235,8 @@ export default function PaymentRequestScreen({ navigation }) {
               ))}
             </View>
 
-            <FieldLabel label="Year" />
+            <FieldLabel label={t("paymentRequest.year")} />
+
             <TextInput
               style={styles.input}
               placeholder="2026"
@@ -210,7 +247,8 @@ export default function PaymentRequestScreen({ navigation }) {
               }
             />
 
-            <FieldLabel label="Due Date" />
+            <FieldLabel label={t("paymentRequest.dueDate")} />
+
             <TextInput
               style={styles.input}
               placeholder="YYYY-MM-DD"
@@ -226,7 +264,9 @@ export default function PaymentRequestScreen({ navigation }) {
               {loading ? (
                 <ActivityIndicator color="#FFFFFF" />
               ) : (
-                <Text style={styles.buttonText}>Create Request</Text>
+                <Text style={styles.buttonText}>
+                  {t("paymentRequest.createRequest")}
+                </Text>
               )}
             </TouchableOpacity>
           </View>

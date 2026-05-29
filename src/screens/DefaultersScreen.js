@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useContext, useState } from "react";
 
 import {
   View,
@@ -30,7 +30,12 @@ import EmptyState from "../components/common/EmptyState";
 
 import { COLORS } from "../components/common/theme";
 
+import { t } from "../i18n";
+import { LanguageContext } from "../context/LanguageContext";
+
 export default function DefaultersScreen() {
+  const { language } = useContext(LanguageContext);
+
   const [defaulters, setDefaulters] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -79,7 +84,10 @@ export default function DefaultersScreen() {
       );
 
       if (downloadResult.status !== 200) {
-        Alert.alert("Error", "Unable to export Excel file.");
+        Alert.alert(
+          t("common.error"),
+          t("defaulters.exportFailed")
+        );
         return;
       }
 
@@ -89,15 +97,22 @@ export default function DefaultersScreen() {
         await Sharing.shareAsync(downloadResult.uri, {
           mimeType:
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-          dialogTitle: "Share Defaulters Report",
+          dialogTitle: t("defaulters.shareReport"),
           UTI: "com.microsoft.excel.xlsx",
         });
       } else {
-        Alert.alert("Downloaded", "Excel file downloaded successfully.");
+        Alert.alert(
+          t("defaulters.downloaded"),
+          t("defaulters.downloadedSuccess")
+        );
       }
     } catch (error) {
       console.log("EXPORT EXCEL ERROR:", error);
-      Alert.alert("Error", "Unable to export Excel file.");
+
+      Alert.alert(
+        t("common.error"),
+        t("defaulters.exportFailed")
+      );
     }
   };
 
@@ -112,7 +127,9 @@ export default function DefaultersScreen() {
         <View style={styles.loaderContainer}>
           <ActivityIndicator size="large" color={COLORS.primary} />
 
-          <Text style={styles.loaderText}>Loading defaulters...</Text>
+          <Text style={styles.loaderText}>
+            {t("defaulters.loading")}
+          </Text>
         </View>
       </SafeAreaView>
     );
@@ -135,62 +152,81 @@ export default function DefaultersScreen() {
         <AppCard style={styles.summaryCard}>
           <View style={styles.summaryTopRow}>
             <View style={styles.summaryTextBlock}>
-              <Text style={styles.summaryLabel}>Total Pending</Text>
+              <Text style={styles.summaryLabel}>
+                {t("defaulters.totalPending")}
+              </Text>
 
               <Text style={styles.summaryAmount}>
                 ₹{formatAmount(totalDue)}
               </Text>
 
               <Text style={styles.summarySubText}>
-                {defaulters.length} defaulter flat
-                {defaulters.length === 1 ? "" : "s"} found
+                {defaulters.length}{" "}
+                {t("defaulters.defaulterFlatsFound")}
               </Text>
             </View>
 
             <View style={styles.summaryIconBox}>
-              <Ionicons name="warning-outline" size={32} color="#FFFFFF" />
+              <Ionicons
+                name="warning-outline"
+                size={32}
+                color="#FFFFFF"
+              />
             </View>
           </View>
         </AppCard>
 
         <AppButton
-          title="Export Excel"
+          title={t("defaulters.exportExcel")}
           variant="success"
           onPress={handleExportExcel}
           style={styles.exportButton}
         />
 
-        <Text style={styles.sectionTitle}>Defaulter Flats</Text>
+        <Text style={styles.sectionTitle}>
+          {t("defaulters.defaulterFlats")}
+        </Text>
 
         {defaulters.length === 0 ? (
           <AppCard>
             <EmptyState
               icon="checkmark-circle-outline"
-              title="No defaulters"
-              subtitle="All residents have cleared their dues."
+              title={t("defaulters.noDefaulters")}
+              subtitle={t("defaulters.allResidentsPaid")}
             />
           </AppCard>
         ) : (
           defaulters.map((item, index) => (
-            <AppCard key={`${item.flatNumber}-${index}`} style={styles.card}>
+            <AppCard
+              key={`${item.flatNumber}-${index}`}
+              style={styles.card}
+            >
               <View style={styles.topRow}>
                 <View style={styles.iconBox}>
-                  <Ionicons name="home-outline" size={24} color="#DC2626" />
+                  <Ionicons
+                    name="home-outline"
+                    size={24}
+                    color="#DC2626"
+                  />
                 </View>
 
                 <View style={styles.titleBlock}>
-                  <Text style={styles.flatNumber}>Flat {item.flatNumber}</Text>
+                  <Text style={styles.flatNumber}>
+                    {t("home.flat")} {item.flatNumber}
+                  </Text>
 
                   <Text style={styles.ownerName}>
-                    {item.ownerName || "Resident"}
+                    {item.ownerName || t("defaulters.resident")}
                   </Text>
                 </View>
               </View>
 
               <View style={styles.breakupContainer}>
                 <DueBreakup
-                  title="Maintenance"
-                  pending={formatMonthCount(item.maintenancePendingMonths)}
+                  title={t("defaulters.maintenance")}
+                  pending={formatMonthCount(
+                    item.maintenancePendingMonths
+                  )}
                   amount={item.maintenanceDue}
                   icon="construct-outline"
                   iconColor="#2563EB"
@@ -198,8 +234,10 @@ export default function DefaultersScreen() {
                 />
 
                 <DueBreakup
-                  title="Special Requests"
-                  pending={formatRequestCount(item.specialRequestCount)}
+                  title={t("defaulters.specialRequests")}
+                  pending={formatRequestCount(
+                    item.specialRequestCount
+                  )}
                   amount={item.specialRequestDue}
                   icon="sparkles-outline"
                   iconColor="#7C3AED"
@@ -208,7 +246,7 @@ export default function DefaultersScreen() {
 
                 {Number(item.otherPendingCount || 0) > 0 ? (
                   <DueBreakup
-                    title="Other"
+                    title={t("defaulters.other")}
                     pending={formatItemCount(item.otherPendingCount)}
                     amount={item.otherDue}
                     icon="document-text-outline"
@@ -220,7 +258,9 @@ export default function DefaultersScreen() {
 
               <View style={styles.totalRow}>
                 <View>
-                  <Text style={styles.totalLabel}>Total Due</Text>
+                  <Text style={styles.totalLabel}>
+                    {t("defaulters.totalDue")}
+                  </Text>
 
                   <Text style={styles.totalAmount}>
                     ₹{formatAmount(item.totalDue)}
@@ -254,17 +294,33 @@ function DueBreakup({
   return (
     <View style={styles.breakupRow}>
       <View style={styles.breakupLeft}>
-        <View style={[styles.breakupIconBox, { backgroundColor: iconBg }]}>
-          <Ionicons name={icon} size={19} color={iconColor} />
+        <View
+          style={[
+            styles.breakupIconBox,
+            { backgroundColor: iconBg },
+          ]}
+        >
+          <Ionicons
+            name={icon}
+            size={19}
+            color={iconColor}
+          />
         </View>
 
         <View>
-          <Text style={styles.breakupTitle}>{title}</Text>
-          <Text style={styles.breakupPending}>Pending: {pending}</Text>
+          <Text style={styles.breakupTitle}>
+            {title}
+          </Text>
+
+          <Text style={styles.breakupPending}>
+            {t("defaulters.pending")}: {pending}
+          </Text>
         </View>
       </View>
 
-      <Text style={styles.breakupAmount}>₹{formatAmount(amount)}</Text>
+      <Text style={styles.breakupAmount}>
+        ₹{formatAmount(amount)}
+      </Text>
     </View>
   );
 }
@@ -272,23 +328,27 @@ function DueBreakup({
 function formatMonthCount(value) {
   const count = Number(value || 0);
 
-  return `${count} month${count === 1 ? "" : "s"}`;
+  return `${count} ${t("defaulters.months")}`;
 }
 
 function formatRequestCount(value) {
   const count = Number(value || 0);
 
-  return `${count} request${count === 1 ? "" : "s"}`;
+  return `${count} ${t("defaulters.requests")}`;
 }
 
 function formatItemCount(value) {
   const count = Number(value || 0);
 
-  return `${count} item${count === 1 ? "" : "s"}`;
+  return `${count} ${t("defaulters.items")}`;
 }
 
 function formatAmount(value) {
-  if (value === null || value === undefined || value === "") {
+  if (
+    value === null ||
+    value === undefined ||
+    value === ""
+  ) {
     return "0";
   }
 
@@ -361,7 +421,8 @@ const styles = StyleSheet.create({
     width: 66,
     height: 66,
     borderRadius: 22,
-    backgroundColor: "rgba(255,255,255,0.18)",
+    backgroundColor:
+      "rgba(255,255,255,0.18)",
     alignItems: "center",
     justifyContent: "center",
   },

@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
+
 import {
   View,
   Text,
@@ -10,16 +11,25 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
+
 import { SafeAreaView } from "react-native-safe-area-context";
+
 import { updateOpeningBalance } from "../api/dashboardApi";
+import { t } from "../i18n";
+import { LanguageContext } from "../context/LanguageContext";
 
 export default function OpeningBalanceScreen({ navigation }) {
+  const { language } = useContext(LanguageContext);
+
   const [amount, setAmount] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async () => {
     if (!amount || Number(amount) <= 0) {
-      Alert.alert("Invalid Amount", "Please enter a valid opening balance.");
+      Alert.alert(
+        t("openingBalance.invalidAmount"),
+        t("openingBalance.enterValidAmount")
+      );
       return;
     }
 
@@ -29,8 +39,8 @@ export default function OpeningBalanceScreen({ navigation }) {
       await updateOpeningBalance(Number(amount));
 
       Alert.alert(
-        "Success",
-        "Opening balance updated successfully.",
+        t("common.success"),
+        t("openingBalance.updateSuccess"),
         [
           {
             text: "OK",
@@ -42,7 +52,11 @@ export default function OpeningBalanceScreen({ navigation }) {
       );
     } catch (error) {
       console.log("OPENING BALANCE ERROR:", error?.response?.data || error);
-      Alert.alert("Error", "Unable to update opening balance.");
+
+      Alert.alert(
+        t("common.error"),
+        t("openingBalance.updateFailed")
+      );
     } finally {
       setLoading(false);
     }
@@ -55,20 +69,27 @@ export default function OpeningBalanceScreen({ navigation }) {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         <View>
-          <Text style={styles.title}>Opening Balance</Text>
+          <Text style={styles.title}>
+            {t("openingBalance.title")}
+          </Text>
+
           <Text style={styles.subtitle}>
-            Enter the current society balance before starting app-based tracking.
+            {t("openingBalance.subtitle")}
           </Text>
 
           <View style={styles.card}>
-            <Text style={styles.label}>Opening Balance Amount</Text>
+            <Text style={styles.label}>
+              {t("openingBalance.amountLabel")}
+            </Text>
 
             <TextInput
               style={styles.input}
-              placeholder="Enter amount"
+              placeholder={t("openingBalance.amountPlaceholder")}
               keyboardType="numeric"
               value={amount}
-              onChangeText={(text) => setAmount(text.replace(/[^0-9.]/g, ""))}
+              onChangeText={(text) =>
+                setAmount(text.replace(/[^0-9.]/g, ""))
+              }
             />
 
             <TouchableOpacity
@@ -79,7 +100,9 @@ export default function OpeningBalanceScreen({ navigation }) {
               {loading ? (
                 <ActivityIndicator color="#FFFFFF" />
               ) : (
-                <Text style={styles.buttonText}>Update Balance</Text>
+                <Text style={styles.buttonText}>
+                  {t("openingBalance.updateBalance")}
+                </Text>
               )}
             </TouchableOpacity>
           </View>
