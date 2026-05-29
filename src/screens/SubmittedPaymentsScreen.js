@@ -31,19 +31,16 @@ import StatusBadge from "../components/common/StatusBadge";
 import EmptyState from "../components/common/EmptyState";
 
 import { COLORS } from "../components/common/theme";
+import { t } from "../i18n";
 
 export default function SubmittedPaymentsScreen() {
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const [actionLoadingId, setActionLoadingId] =
-    useState(null);
-
+  const [actionLoadingId, setActionLoadingId] = useState(null);
   const [user, setUser] = useState(null);
-
-  const [previewImageUrl, setPreviewImageUrl] =
-    useState(null);
+  const [previewImageUrl, setPreviewImageUrl] = useState(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -55,20 +52,15 @@ export default function SubmittedPaymentsScreen() {
     try {
       setLoading(true);
 
-      const [userRes, paymentsRes] =
-        await Promise.all([
-          getLoggedInUser(),
-          getSubmittedPayments(),
-        ]);
+      const [userRes, paymentsRes] = await Promise.all([
+        getLoggedInUser(),
+        getSubmittedPayments(),
+      ]);
 
       setUser(userRes.data);
-
       setPayments(paymentsRes.data || []);
     } catch (error) {
-      console.log(
-        "SUBMITTED PAYMENTS ERROR:",
-        error?.response?.data || error
-      );
+      console.log("SUBMITTED PAYMENTS ERROR:", error?.response?.data || error);
     } finally {
       setLoading(false);
     }
@@ -76,78 +68,53 @@ export default function SubmittedPaymentsScreen() {
 
   const onRefresh = async () => {
     setRefreshing(true);
-
     await loadPayments();
-
     setRefreshing(false);
   };
 
-  const handleVerify = (
-    paymentId,
-    approved
-  ) => {
+  const handleVerify = (paymentId, approved) => {
     Alert.alert(
       approved
-        ? "Approve Payment"
-        : "Reject Payment",
-
+        ? t("submittedPayments.approvePayment")
+        : t("submittedPayments.rejectPayment"),
       approved
-        ? "Are you sure you want to approve this payment?"
-        : "Are you sure you want to reject this payment?",
-
+        ? t("submittedPayments.approveConfirm")
+        : t("submittedPayments.rejectConfirm"),
       [
         {
-          text: "Cancel",
+          text: t("common.cancel"),
           style: "cancel",
         },
-
         {
           text: approved
-            ? "Approve"
-            : "Reject",
-
-          style: approved
-            ? "default"
-            : "destructive",
-
+            ? t("submittedPayments.approve")
+            : t("submittedPayments.reject"),
+          style: approved ? "default" : "destructive",
           onPress: async () => {
             try {
-              setActionLoadingId(
-                paymentId
-              );
+              setActionLoadingId(paymentId);
 
-              await verifyPayment(
-                paymentId,
-                approved
-              );
+              await verifyPayment(paymentId, approved);
 
               Alert.alert(
-                "Success",
-
+                t("common.success"),
                 approved
-                  ? "Payment approved successfully."
-                  : "Payment rejected successfully."
+                  ? t("submittedPayments.approveSuccess")
+                  : t("submittedPayments.rejectSuccess")
               );
 
               await loadPayments();
             } catch (error) {
-              console.log(
-                "VERIFY PAYMENT ERROR:",
-                error?.response?.data ||
-                  error
-              );
+              console.log("VERIFY PAYMENT ERROR:", error?.response?.data || error);
 
               Alert.alert(
-                "Error",
-
+                t("common.error"),
                 approved
-                  ? "Unable to approve payment."
-                  : "Unable to reject payment."
+                  ? t("submittedPayments.approveFailed")
+                  : t("submittedPayments.rejectFailed")
               );
             } finally {
-              setActionLoadingId(
-                null
-              );
+              setActionLoadingId(null);
             }
           },
         },
@@ -155,47 +122,28 @@ export default function SubmittedPaymentsScreen() {
     );
   };
 
-  const getFullImageUrl = (
-    receiptUrl
-  ) => {
+  const getFullImageUrl = (receiptUrl) => {
     if (!receiptUrl) {
       return null;
     }
 
-    if (
-      receiptUrl.startsWith("http")
-    ) {
+    if (receiptUrl.startsWith("http")) {
       return receiptUrl;
     }
 
-    return (
-      API.defaults.baseURL.replace(
-        "/api",
-        ""
-      ) + receiptUrl
-    );
+    return API.defaults.baseURL.replace("/api", "") + receiptUrl;
   };
 
-  const isCashier =
-    user?.role?.toUpperCase() ===
-    "CASHIER";
+  const isCashier = user?.role?.toUpperCase() === "CASHIER";
 
   if (loading) {
     return (
-      <SafeAreaView
-        style={styles.safeArea}
-      >
-        <View
-          style={styles.loaderContainer}
-        >
-          <ActivityIndicator
-            size="large"
-            color={COLORS.primary}
-          />
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.loaderContainer}>
+          <ActivityIndicator size="large" color={COLORS.primary} />
 
           <Text style={styles.loaderText}>
-            Loading submitted
-            payments...
+            {t("submittedPayments.loading")}
           </Text>
         </View>
       </SafeAreaView>
@@ -203,277 +151,145 @@ export default function SubmittedPaymentsScreen() {
   }
 
   return (
-    <SafeAreaView
-      style={styles.safeArea}
-      edges={["bottom"]}
-    >
+    <SafeAreaView style={styles.safeArea} edges={["bottom"]}>
       <ScrollView
-        contentContainerStyle={
-          styles.container
-        }
+        contentContainerStyle={styles.container}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
             colors={[COLORS.primary]}
-            tintColor={
-              COLORS.primary
-            }
+            tintColor={COLORS.primary}
           />
         }
-        showsVerticalScrollIndicator={
-          false
-        }
+        showsVerticalScrollIndicator={false}
       >
         <Text style={styles.heading}>
-          Submitted Payments
+          {t("submittedPayments.title")}
         </Text>
 
         {payments.length === 0 ? (
           <AppCard>
             <EmptyState
               icon="checkmark-circle-outline"
-              title="No submitted payments"
-              subtitle="No resident payments are waiting for approval."
+              title={t("submittedPayments.emptyTitle")}
+              subtitle={t("submittedPayments.emptySubtitle")}
             />
           </AppCard>
         ) : (
           payments.map((item) => (
-            <AppCard
-              key={item.paymentId}
-              style={styles.card}
-            >
-              <View
-                style={styles.topRow}
-              >
-                <View
-                  style={styles.iconBox}
-                >
+            <AppCard key={item.paymentId} style={styles.card}>
+              <View style={styles.topRow}>
+                <View style={styles.iconBox}>
                   <Ionicons
                     name="receipt-outline"
                     size={24}
-                    color={
-                      COLORS.primary
-                    }
+                    color={COLORS.primary}
                   />
                 </View>
 
-                <View
-                  style={
-                    styles.titleBlock
-                  }
-                >
-                  <Text
-                    style={
-                      styles.title
-                    }
-                  >
-                    {
-                      item.requestType
-                    }
+                <View style={styles.titleBlock}>
+                  <Text style={styles.title}>
+                    {item.requestType}
                   </Text>
 
-                  <Text
-                    style={
-                      styles.subtitle
-                    }
-                  >
-                    Flat{" "}
-                    {item.flatNumber ||
-                      "-"}
+                  <Text style={styles.subtitle}>
+                    {t("home.flat")} {item.flatNumber || "-"}
                   </Text>
                 </View>
 
-                <StatusBadge
-                  status={
-                    item.paymentStatus
-                  }
-                />
+                <StatusBadge status={item.paymentStatus} />
               </View>
 
-              <View
-                style={
-                  styles.amountSection
-                }
-              >
+              <View style={styles.amountSection}>
                 <View>
-                  <Text
-                    style={
-                      styles.amountLabel
-                    }
-                  >
-                    Amount
+                  <Text style={styles.amountLabel}>
+                    {t("myDues.amount")}
                   </Text>
 
-                  <Text
-                    style={
-                      styles.amount
-                    }
-                  >
-                    ₹
-                    {formatAmount(
-                      item.amount
-                    )}
+                  <Text style={styles.amount}>
+                    ₹{formatAmount(item.amount)}
                   </Text>
                 </View>
 
-                <View
-                  style={
-                    styles.modeBox
-                  }
-                >
-                  <Text
-                    style={
-                      styles.modeLabel
-                    }
-                  >
-                    {formatMode(
-                      item.paymentMode
-                    )}
+                <View style={styles.modeBox}>
+                  <Text style={styles.modeLabel}>
+                    {formatMode(item.paymentMode)}
                   </Text>
                 </View>
               </View>
 
-              <View
-                style={styles.infoRow}
-              >
-                <View
-                  style={
-                    styles.infoItem
-                  }
-                >
+              <View style={styles.infoRow}>
+                <View style={styles.infoItem}>
                   <Ionicons
                     name="calendar-outline"
                     size={14}
-                    color={
-                      COLORS.textMuted
-                    }
+                    color={COLORS.textMuted}
                   />
 
-                  <Text
-                    style={
-                      styles.infoText
-                    }
-                  >
-                    Submitted
+                  <Text style={styles.infoText}>
+                    {t("submittedPayments.submitted")}
                   </Text>
                 </View>
 
-                <Text
-                  style={
-                    styles.infoValue
-                  }
-                >
-                  {formatDate(
-                    item.createdAt ||
-                      item.submittedAt
-                  )}
+                <Text style={styles.infoValue}>
+                  {formatDate(item.createdAt || item.submittedAt)}
                 </Text>
               </View>
 
               {item.receiptUrl && (
                 <TouchableOpacity
-                  style={
-                    styles.receiptPreviewBox
-                  }
+                  style={styles.receiptPreviewBox}
                   onPress={() =>
-                    setPreviewImageUrl(
-                      getFullImageUrl(
-                        item.receiptUrl
-                      )
-                    )
+                    setPreviewImageUrl(getFullImageUrl(item.receiptUrl))
                   }
                   activeOpacity={0.85}
                 >
-                  <View
-                    style={
-                      styles.receiptIconCircle
-                    }
-                  >
+                  <View style={styles.receiptIconCircle}>
                     <Ionicons
                       name="image-outline"
                       size={34}
-                      color={
-                        COLORS.primary
-                      }
+                      color={COLORS.primary}
                     />
                   </View>
 
-                  <Text
-                    style={
-                      styles.previewTitle
-                    }
-                  >
-                    Receipt Uploaded
+                  <Text style={styles.previewTitle}>
+                    {t("submittedPayments.receiptUploaded")}
                   </Text>
 
-                  <Text
-                    style={
-                      styles.previewSubtitle
-                    }
-                  >
-                    Tap to preview image
+                  <Text style={styles.previewSubtitle}>
+                    {t("submitPayment.tapToPreview")}
                   </Text>
                 </TouchableOpacity>
               )}
 
-              {isCashier &&
-                item.paymentStatus ===
-                  "SUBMITTED" && (
-                  <View
-                    style={
-                      styles.actionRow
-                    }
-                  >
-                    <AppButton
-                      title="Reject"
-                      variant="outline"
-                      onPress={() =>
-                        handleVerify(
-                          item.paymentId,
-                          false
-                        )
-                      }
-                      disabled={
-                        actionLoadingId ===
-                        item.paymentId
-                      }
-                      style={
-                        styles.rejectButton
-                      }
-                    />
+              {isCashier && item.paymentStatus === "SUBMITTED" && (
+                <View style={styles.actionRow}>
+                  <AppButton
+                    title={t("submittedPayments.reject")}
+                    variant="outline"
+                    onPress={() => handleVerify(item.paymentId, false)}
+                    disabled={actionLoadingId === item.paymentId}
+                    style={styles.rejectButton}
+                  />
 
-                    <AppButton
-                      title="Approve"
-                      onPress={() =>
-                        handleVerify(
-                          item.paymentId,
-                          true
-                        )
-                      }
-                      loading={
-                        actionLoadingId ===
-                        item.paymentId
-                      }
-                      style={
-                        styles.approveButton
-                      }
-                    />
-                  </View>
-                )}
+                  <AppButton
+                    title={t("submittedPayments.approve")}
+                    onPress={() => handleVerify(item.paymentId, true)}
+                    loading={actionLoadingId === item.paymentId}
+                    style={styles.approveButton}
+                  />
+                </View>
+              )}
             </AppCard>
           ))
         )}
       </ScrollView>
 
       <ImagePreviewModal
-        visible={
-          !!previewImageUrl
-        }
+        visible={!!previewImageUrl}
         imageUrl={previewImageUrl}
-        onClose={() =>
-          setPreviewImageUrl(null)
-        }
+        onClose={() => setPreviewImageUrl(null)}
       />
     </SafeAreaView>
   );
@@ -482,30 +298,35 @@ export default function SubmittedPaymentsScreen() {
 function formatAmount(value) {
   if (!value) return "0";
 
-  return Number(value).toLocaleString(
-    "en-IN"
-  );
+  return Number(value).toLocaleString("en-IN");
 }
 
 function formatMode(mode) {
   if (!mode) return "-";
 
-  if (
-    mode === "BANK_TRANSFER"
-  ) {
-    return "Bank Transfer";
-  }
+  switch (mode) {
+    case "UPI":
+      return t("submitPayment.upi");
 
-  return mode;
+    case "BANK_TRANSFER":
+      return t("submitPayment.bankTransfer");
+
+    case "CASH":
+      return t("submitPayment.cash");
+
+    case "CHEQUE":
+      return t("submitPayment.cheque");
+
+    default:
+      return mode;
+  }
 }
 
 function formatDate(date) {
   if (!date) return "-";
 
   try {
-    return new Date(
-      date
-    ).toLocaleDateString("en-IN");
+    return new Date(date).toLocaleDateString("en-IN");
   } catch {
     return "-";
   }
@@ -514,8 +335,7 @@ function formatDate(date) {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor:
-      COLORS.background,
+    backgroundColor: COLORS.background,
   },
 
   container: {
@@ -585,11 +405,9 @@ const styles = StyleSheet.create({
     marginTop: 18,
     paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor:
-      COLORS.borderLight,
+    borderTopColor: COLORS.borderLight,
     flexDirection: "row",
-    justifyContent:
-      "space-between",
+    justifyContent: "space-between",
     alignItems: "center",
   },
 
@@ -623,11 +441,9 @@ const styles = StyleSheet.create({
     marginTop: 14,
     paddingTop: 14,
     borderTopWidth: 1,
-    borderTopColor:
-      COLORS.borderLight,
+    borderTopColor: COLORS.borderLight,
     flexDirection: "row",
-    justifyContent:
-      "space-between",
+    justifyContent: "space-between",
     alignItems: "center",
   },
 
@@ -645,8 +461,7 @@ const styles = StyleSheet.create({
 
   infoValue: {
     fontSize: 12,
-    color:
-      COLORS.textSecondary,
+    color: COLORS.textSecondary,
     fontWeight: "800",
   },
 
@@ -687,8 +502,7 @@ const styles = StyleSheet.create({
 
   actionRow: {
     flexDirection: "row",
-    justifyContent:
-      "space-between",
+    justifyContent: "space-between",
     marginTop: 18,
   },
 

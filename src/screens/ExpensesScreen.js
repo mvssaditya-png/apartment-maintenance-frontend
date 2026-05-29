@@ -11,13 +11,14 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 
 import React, {
+  useContext,
   useEffect,
   useState,
 } from "react";
 
 import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
-
+import { LanguageContext } from "../context/LanguageContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import {
@@ -28,9 +29,12 @@ import {
 import AppCard from "../components/common/AppCard";
 import { COLORS } from "../components/common/theme";
 
+import { t } from "../i18n";
+
 export default function ExpensesScreen({
   navigation,
 }) {
+  const { language } = useContext(LanguageContext);
   const [user, setUser] =
     useState(null);
 
@@ -80,8 +84,8 @@ export default function ExpensesScreen({
           result.status !== 200
         ) {
           Alert.alert(
-            "Error",
-            "Unable to export expenses."
+            t("common.error"),
+            t("expenses.exportFailed")
           );
 
           return;
@@ -97,7 +101,7 @@ export default function ExpensesScreen({
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 
               dialogTitle:
-                "Share Expenses Report",
+                t("expenses.shareReport"),
 
               UTI:
                 "com.microsoft.excel.xlsx",
@@ -105,8 +109,8 @@ export default function ExpensesScreen({
           );
         } else {
           Alert.alert(
-            "Downloaded",
-            "Expenses exported successfully."
+            t("expenses.downloaded"),
+            t("expenses.exportSuccess")
           );
         }
       } catch (error) {
@@ -116,8 +120,8 @@ export default function ExpensesScreen({
         );
 
         Alert.alert(
-          "Error",
-          "Unable to export expenses."
+          t("common.error"),
+          t("expenses.exportFailed")
         );
       }
     };
@@ -131,7 +135,7 @@ export default function ExpensesScreen({
   return (
     <SafeAreaView
       style={styles.safeArea}
-      edges={["top","bottom"]}
+      edges={["top", "bottom"]}
     >
       <ScrollView
         contentContainerStyle={
@@ -155,7 +159,7 @@ export default function ExpensesScreen({
           <Text
             style={styles.heading}
           >
-            Expenses
+            {t("expenses.title")}
           </Text>
 
           <Text
@@ -163,9 +167,7 @@ export default function ExpensesScreen({
               styles.subtitle
             }
           >
-            Manage society
-            expenses, receipts and
-            financial reports.
+            {t("expenses.subtitle")}
           </Text>
         </View>
 
@@ -174,14 +176,14 @@ export default function ExpensesScreen({
             styles.sectionTitle
           }
         >
-          Expense Management
+          {t("expenses.management")}
         </Text>
 
         {isAdminOrCashier && (
           <ExpenseCard
             icon="add-circle-outline"
-            title="Add Expense"
-            subtitle="Record a new society expense"
+            title={t("expenses.addExpense")}
+            subtitle={t("expenses.addExpenseSubtitle")}
             color="#DC2626"
             bg="#FEF2F2"
             onPress={() =>
@@ -194,8 +196,8 @@ export default function ExpensesScreen({
 
         <ExpenseCard
           icon="eye-outline"
-          title="View Expenses"
-          subtitle="View recorded expenses and uploaded receipts"
+          title={t("expenses.viewExpenses")}
+          subtitle={t("expenses.viewExpensesSubtitle")}
           color="#2563EB"
           bg="#EEF4FF"
           onPress={() =>
@@ -208,8 +210,8 @@ export default function ExpensesScreen({
         {isAdminOrCashier && (
           <ExpenseCard
             icon="download-outline"
-            title="Export Expenses"
-            subtitle="Download complete expenses report in Excel"
+            title={t("expenses.exportExpenses")}
+            subtitle={t("expenses.exportExpensesSubtitle")}
             color="#16A34A"
             bg="#ECFDF5"
             onPress={

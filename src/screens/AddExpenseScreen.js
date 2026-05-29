@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 
 import {
   View,
@@ -26,6 +26,8 @@ import AppButton from "../components/common/AppButton";
 import AppInput from "../components/common/AppInput";
 
 import { COLORS } from "../components/common/theme";
+import { t } from "../i18n";
+import { LanguageContext } from "../context/LanguageContext";
 
 const EXPENSE_CATEGORIES = [
   "MAINTENANCE",
@@ -38,21 +40,17 @@ const EXPENSE_CATEGORIES = [
 ];
 
 export default function AddExpenseScreen({ navigation }) {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] =
-    useState("");
-  const [amount, setAmount] = useState("");
-  const [expenseDate, setExpenseDate] =
-    useState("");
-  const [category, setCategory] =
-    useState("MAINTENANCE");
+  const { language } = useContext(LanguageContext);
 
-  const [selectedImage, setSelectedImage] =
-    useState(null);
-  const [loading, setLoading] =
-    useState(false);
-  const [previewImageUrl, setPreviewImageUrl] =
-    useState(null);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [amount, setAmount] = useState("");
+  const [expenseDate, setExpenseDate] = useState("");
+  const [category, setCategory] = useState("MAINTENANCE");
+
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [previewImageUrl, setPreviewImageUrl] = useState(null);
 
   const pickImage = async () => {
     const permission =
@@ -60,16 +58,15 @@ export default function AddExpenseScreen({ navigation }) {
 
     if (!permission.granted) {
       Alert.alert(
-        "Permission Required",
-        "Please allow gallery access."
+        t("submitPayment.permissionRequired"),
+        t("submitPayment.allowGalleryAccess")
       );
       return;
     }
 
     const result =
       await ImagePicker.launchImageLibraryAsync({
-        mediaTypes:
-          ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
         quality: 0.8,
       });
 
@@ -81,24 +78,24 @@ export default function AddExpenseScreen({ navigation }) {
   const handleSubmit = async () => {
     if (!title.trim()) {
       Alert.alert(
-        "Validation Error",
-        "Please enter expense title."
+        t("addExpense.validationError"),
+        t("addExpense.enterTitle")
       );
       return;
     }
 
     if (!amount || Number(amount) <= 0) {
       Alert.alert(
-        "Validation Error",
-        "Please enter valid amount."
+        t("addExpense.validationError"),
+        t("addExpense.enterValidAmount")
       );
       return;
     }
 
     if (!expenseDate.trim()) {
       Alert.alert(
-        "Validation Error",
-        "Please enter expense date."
+        t("addExpense.validationError"),
+        t("addExpense.enterExpenseDate")
       );
       return;
     }
@@ -109,34 +106,26 @@ export default function AddExpenseScreen({ navigation }) {
       let receiptUrl = "";
 
       if (selectedImage) {
-        const uploadRes =
-          await uploadReceiptImage(
-            selectedImage
-          );
-
-        receiptUrl =
-          uploadRes.data.fileUrl;
+        const uploadRes = await uploadReceiptImage(selectedImage);
+        receiptUrl = uploadRes.data.fileUrl;
       }
 
       await addExpense({
         title: title.trim(),
-        description:
-          description.trim(),
+        description: description.trim(),
         amount: Number(amount),
-        expenseDate:
-          expenseDate.trim(),
+        expenseDate: expenseDate.trim(),
         category,
         receiptUrl,
       });
 
       Alert.alert(
-        "Success",
-        "Expense added successfully.",
+        t("common.success"),
+        t("addExpense.expenseAdded"),
         [
           {
             text: "OK",
-            onPress: () =>
-              navigation.goBack(),
+            onPress: () => navigation.goBack(),
           },
         ]
       );
@@ -147,8 +136,8 @@ export default function AddExpenseScreen({ navigation }) {
       );
 
       Alert.alert(
-        "Error",
-        "Unable to add expense."
+        t("common.error"),
+        t("addExpense.addFailed")
       );
     } finally {
       setLoading(false);
@@ -161,12 +150,8 @@ export default function AddExpenseScreen({ navigation }) {
       edges={["bottom"]}
     >
       <ScrollView
-        contentContainerStyle={
-          styles.container
-        }
-        showsVerticalScrollIndicator={
-          false
-        }
+        contentContainerStyle={styles.container}
+        showsVerticalScrollIndicator={false}
       >
         <View style={styles.headerCard}>
           <Ionicons
@@ -176,53 +161,49 @@ export default function AddExpenseScreen({ navigation }) {
           />
 
           <Text style={styles.title}>
-            Add Expense
+            {t("addExpense.title")}
           </Text>
 
           <Text style={styles.subtitle}>
-            Record society expenses such as
-            repairs, cleaning, electricity,
-            water or maintenance work.
+            {t("addExpense.subtitle")}
           </Text>
         </View>
 
         <AppCard style={styles.card}>
           <AppInput
-            label="Expense Title"
-            placeholder="Example: Generator Repair"
+            label={t("addExpense.expenseTitle")}
+            placeholder={t("addExpense.expenseTitlePlaceholder")}
             value={title}
             onChangeText={setTitle}
           />
 
           <AppInput
-            label="Description"
-            placeholder="Example: Motor replacement"
+            label={t("addExpense.description")}
+            placeholder={t("addExpense.descriptionPlaceholder")}
             value={description}
             onChangeText={setDescription}
             multiline
           />
 
           <AppInput
-            label="Amount"
-            placeholder="Example: 5000"
+            label={t("addExpense.amount")}
+            placeholder={t("addExpense.amountPlaceholder")}
             keyboardType="numeric"
             value={amount}
             onChangeText={(text) =>
-              setAmount(
-                text.replace(/[^0-9.]/g, "")
-              )
+              setAmount(text.replace(/[^0-9.]/g, ""))
             }
           />
 
           <AppInput
-            label="Expense Date"
+            label={t("addExpense.expenseDate")}
             placeholder="YYYY-MM-DD"
             value={expenseDate}
             onChangeText={setExpenseDate}
           />
 
           <Text style={styles.label}>
-            Category
+            {t("addExpense.category")}
           </Text>
 
           <View style={styles.categoryGrid}>
@@ -231,19 +212,15 @@ export default function AddExpenseScreen({ navigation }) {
                 key={item}
                 style={[
                   styles.categoryButton,
-                  category === item &&
-                    styles.categoryButtonActive,
+                  category === item && styles.categoryButtonActive,
                 ]}
-                onPress={() =>
-                  setCategory(item)
-                }
+                onPress={() => setCategory(item)}
                 activeOpacity={0.85}
               >
                 <Text
                   style={[
                     styles.categoryText,
-                    category === item &&
-                      styles.categoryTextActive,
+                    category === item && styles.categoryTextActive,
                   ]}
                 >
                   {formatCategory(item)}
@@ -253,16 +230,14 @@ export default function AddExpenseScreen({ navigation }) {
           </View>
 
           <Text style={styles.label}>
-            Receipt Image Optional
+            {t("addExpense.receiptImageOptional")}
           </Text>
 
           <TouchableOpacity
             style={styles.uploadBox}
             onPress={() => {
               if (selectedImage) {
-                setPreviewImageUrl(
-                  selectedImage.uri
-                );
+                setPreviewImageUrl(selectedImage.uri);
               } else {
                 pickImage();
               }
@@ -283,20 +258,20 @@ export default function AddExpenseScreen({ navigation }) {
 
             <Text style={styles.uploadTitle}>
               {selectedImage
-                ? "Receipt Selected"
-                : "Upload Receipt"}
+                ? t("submitPayment.receiptSelected")
+                : t("addExpense.uploadReceipt")}
             </Text>
 
             <Text style={styles.uploadText}>
               {selectedImage
-                ? "Tap to preview image"
-                : "Select receipt image from gallery"}
+                ? t("submitPayment.tapToPreview")
+                : t("addExpense.selectReceipt")}
             </Text>
           </TouchableOpacity>
 
           {selectedImage ? (
             <AppButton
-              title="Change Receipt"
+              title={t("addExpense.changeReceipt")}
               variant="secondary"
               onPress={pickImage}
               style={styles.changeButton}
@@ -304,7 +279,7 @@ export default function AddExpenseScreen({ navigation }) {
           ) : null}
 
           <AppButton
-            title="Add Expense"
+            title={t("addExpense.addExpense")}
             onPress={handleSubmit}
             loading={loading}
           />
@@ -314,9 +289,7 @@ export default function AddExpenseScreen({ navigation }) {
       <ImagePreviewModal
         visible={!!previewImageUrl}
         imageUrl={previewImageUrl}
-        onClose={() =>
-          setPreviewImageUrl(null)
-        }
+        onClose={() => setPreviewImageUrl(null)}
       />
     </SafeAreaView>
   );
@@ -325,18 +298,37 @@ export default function AddExpenseScreen({ navigation }) {
 function formatCategory(value) {
   if (!value) return "-";
 
-  return value
-    .toLowerCase()
-    .replace(/\b\w/g, (char) =>
-      char.toUpperCase()
-    );
+  switch (value) {
+    case "MAINTENANCE":
+      return t("addExpense.categories.maintenance");
+
+    case "REPAIR":
+      return t("addExpense.categories.repair");
+
+    case "ELECTRICITY":
+      return t("addExpense.categories.electricity");
+
+    case "WATER":
+      return t("addExpense.categories.water");
+
+    case "SECURITY":
+      return t("addExpense.categories.security");
+
+    case "CLEANING":
+      return t("addExpense.categories.cleaning");
+
+    case "OTHER":
+      return t("addExpense.categories.other");
+
+    default:
+      return value;
+  }
 }
 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor:
-      COLORS.background,
+    backgroundColor: COLORS.background,
   },
 
   container: {

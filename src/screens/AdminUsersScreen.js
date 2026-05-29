@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useContext, useState } from "react";
 
 import {
   View,
@@ -33,7 +33,12 @@ import {
   getFlatOptions,
 } from "../api/dashboardApi";
 
+import { t } from "../i18n";
+import { LanguageContext } from "../context/LanguageContext";
+
 export default function AdminUsersScreen() {
+  const { language } = useContext(LanguageContext);
+
   const [users, setUsers] = useState([]);
   const [owners, setOwners] = useState([]);
   const [flats, setFlats] = useState([]);
@@ -86,7 +91,7 @@ export default function AdminUsersScreen() {
       const currentSiteId = loggedInUser?.siteId;
 
       if (!currentSiteId) {
-        Alert.alert("Error", "Site ID missing for logged-in user");
+        Alert.alert(t("common.error"), t("adminUsers.siteIdMissing"));
         return;
       }
 
@@ -105,8 +110,8 @@ export default function AdminUsersScreen() {
       console.log("LOAD USERS ERROR:", error?.response?.data || error);
 
       Alert.alert(
-        "Error",
-        error?.response?.data?.message || "Failed to load users"
+        t("common.error"),
+        error?.response?.data?.message || t("adminUsers.loadFailed")
       );
     } finally {
       setLoading(false);
@@ -132,7 +137,6 @@ export default function AdminUsersScreen() {
     );
 
     const owner = owners.find((o) => o.userId === user.ownerUserId);
-
     setSelectedOwner(owner || null);
 
     setForm({
@@ -165,37 +169,37 @@ export default function AdminUsersScreen() {
 
   const saveUser = async () => {
     if (!siteId) {
-      Alert.alert("Validation", "Site ID missing");
+      Alert.alert(t("adminUsers.validation"), t("adminUsers.siteIdMissing"));
       return;
     }
 
     if (!selectedFlat?.flatId) {
-      Alert.alert("Validation", "Please select flat");
+      Alert.alert(t("adminUsers.validation"), t("adminUsers.selectFlat"));
       return;
     }
 
     if (!form.name.trim()) {
-      Alert.alert("Validation", "Name is required");
+      Alert.alert(t("adminUsers.validation"), t("adminUsers.nameRequired"));
       return;
     }
 
     if (!form.phoneNumber.trim()) {
-      Alert.alert("Validation", "Phone number is required");
+      Alert.alert(t("adminUsers.validation"), t("adminUsers.phoneRequired"));
       return;
     }
 
     if (!form.role) {
-      Alert.alert("Validation", "Please select role");
+      Alert.alert(t("adminUsers.validation"), t("adminUsers.selectRole"));
       return;
     }
 
     if (!form.residentType) {
-      Alert.alert("Validation", "Please select resident type");
+      Alert.alert(t("adminUsers.validation"), t("adminUsers.selectResidentType"));
       return;
     }
 
     if (form.residentType === "TENANT" && !selectedOwner?.userId) {
-      Alert.alert("Validation", "Please select owner for tenant");
+      Alert.alert(t("adminUsers.validation"), t("adminUsers.selectOwnerForTenant"));
       return;
     }
 
@@ -208,8 +212,7 @@ export default function AdminUsersScreen() {
       email: form.email?.trim() || null,
       role: form.role,
       residentType: form.residentType,
-      ownerUserId:
-        form.residentType === "TENANT" ? selectedOwner.userId : null,
+      ownerUserId: form.residentType === "TENANT" ? selectedOwner.userId : null,
       isActive: form.isActive,
     };
 
@@ -218,10 +221,10 @@ export default function AdminUsersScreen() {
 
       if (editingUser) {
         await updateUser(editingUser.userId, payload);
-        Alert.alert("Success", "User updated successfully");
+        Alert.alert(t("common.success"), t("adminUsers.updateSuccess"));
       } else {
         await createUser(payload);
-        Alert.alert("Success", "User created successfully");
+        Alert.alert(t("common.success"), t("adminUsers.createSuccess"));
       }
 
       setModalVisible(false);
@@ -231,9 +234,9 @@ export default function AdminUsersScreen() {
       console.log("SAVE USER ERROR:", error?.response?.data || error);
 
       Alert.alert(
-        "Error",
+        t("common.error"),
         error?.response?.data?.message ||
-          String(error?.response?.data || "Failed to save user")
+          String(error?.response?.data || t("adminUsers.saveFailed"))
       );
     } finally {
       setSaving(false);
@@ -269,7 +272,7 @@ export default function AdminUsersScreen() {
           <Text style={styles.name}>{item.name}</Text>
 
           <Text style={styles.flatInfo}>
-            Flat {item.flatNumber || "-"}
+            {t("home.flat")} {item.flatNumber || "-"}
           </Text>
         </View>
 
@@ -285,7 +288,7 @@ export default function AdminUsersScreen() {
               item.isActive ? styles.activeBadgeText : styles.inactiveBadgeText,
             ]}
           >
-            {item.isActive ? "ACTIVE" : "INACTIVE"}
+            {item.isActive ? t("adminUsers.active") : t("adminUsers.inactive")}
           </Text>
         </View>
       </View>
@@ -293,19 +296,19 @@ export default function AdminUsersScreen() {
       <View style={styles.infoSection}>
         <InfoItem icon="call-outline" value={item.phoneNumber || "-"} />
 
-        {item.email ? (
-          <InfoItem icon="mail-outline" value={item.email} />
-        ) : null}
+        {item.email ? <InfoItem icon="mail-outline" value={item.email} /> : null}
 
-        <InfoItem icon="shield-outline" value={item.role || "-"} />
+        <InfoItem icon="shield-outline" value={formatRole(item.role)} />
 
         {item.residentType ? (
           <InfoItem
             icon="people-outline"
             value={
               item.ownerName
-                ? `${item.residentType} • Owner: ${item.ownerName}`
-                : item.residentType
+                ? `${formatResidentType(item.residentType)} • ${t(
+                    "adminUsers.owner"
+                  )}: ${item.ownerName}`
+                : formatResidentType(item.residentType)
             }
           />
         ) : null}
@@ -314,14 +317,12 @@ export default function AdminUsersScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
+    <SafeAreaView style={styles.safeArea} edges={["bottom"]}>
       <View style={styles.container}>
         <View style={styles.headerRow}>
           <View>
-            <Text style={styles.heading}>Manage Users</Text>
-            <Text style={styles.subtitle}>
-              Add, edit and manage residents
-            </Text>
+            <Text style={styles.heading}>{t("adminUsers.title")}</Text>
+            <Text style={styles.subtitle}>{t("adminUsers.subtitle")}</Text>
           </View>
 
           <TouchableOpacity
@@ -336,7 +337,7 @@ export default function AdminUsersScreen() {
         {loading ? (
           <View style={styles.loaderBox}>
             <ActivityIndicator size="large" color="#2563EB" />
-            <Text style={styles.loaderText}>Loading users...</Text>
+            <Text style={styles.loaderText}>{t("adminUsers.loading")}</Text>
           </View>
         ) : (
           <FlatList
@@ -348,7 +349,7 @@ export default function AdminUsersScreen() {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.listContent}
             ListEmptyComponent={
-              <Text style={styles.emptyText}>No users found</Text>
+              <Text style={styles.emptyText}>{t("adminUsers.noUsers")}</Text>
             }
           />
         )}
@@ -371,13 +372,15 @@ export default function AdminUsersScreen() {
                 <View style={styles.modalHeader}>
                   <View>
                     <Text style={styles.modalTitle}>
-                      {editingUser ? "Edit User" : "Add User"}
+                      {editingUser
+                        ? t("adminUsers.editUser")
+                        : t("adminUsers.addUser")}
                     </Text>
 
                     <Text style={styles.modalSubtitle}>
                       {editingUser
-                        ? "Update resident details"
-                        : "Create a new resident profile"}
+                        ? t("adminUsers.updateResidentDetails")
+                        : t("adminUsers.createResidentProfile")}
                     </Text>
                   </View>
 
@@ -391,7 +394,7 @@ export default function AdminUsersScreen() {
                   </TouchableOpacity>
                 </View>
 
-                <Text style={styles.label}>Flat</Text>
+                <Text style={styles.label}>{t("home.flat")}</Text>
 
                 <FlatSelector
                   flats={flats}
@@ -401,7 +404,7 @@ export default function AdminUsersScreen() {
 
                 <TextInput
                   style={styles.input}
-                  placeholder="Name"
+                  placeholder={t("adminUsers.name")}
                   placeholderTextColor="#9CA3AF"
                   value={form.name}
                   onChangeText={(text) => setForm({ ...form, name: text })}
@@ -409,18 +412,16 @@ export default function AdminUsersScreen() {
 
                 <TextInput
                   style={styles.input}
-                  placeholder="Phone Number"
+                  placeholder={t("adminUsers.phoneNumber")}
                   placeholderTextColor="#9CA3AF"
                   keyboardType="phone-pad"
                   value={form.phoneNumber}
-                  onChangeText={(text) =>
-                    setForm({ ...form, phoneNumber: text })
-                  }
+                  onChangeText={(text) => setForm({ ...form, phoneNumber: text })}
                 />
 
                 <TextInput
                   style={styles.input}
-                  placeholder="Email Optional"
+                  placeholder={t("adminUsers.emailOptional")}
                   placeholderTextColor="#9CA3AF"
                   keyboardType="email-address"
                   autoCapitalize="none"
@@ -428,7 +429,7 @@ export default function AdminUsersScreen() {
                   onChangeText={(text) => setForm({ ...form, email: text })}
                 />
 
-                <Text style={styles.label}>Role</Text>
+                <Text style={styles.label}>{t("profile.role")}</Text>
 
                 <View style={styles.chipRow}>
                   {["RESIDENT", "CASHIER", "ADMIN"].map((role) => (
@@ -447,13 +448,13 @@ export default function AdminUsersScreen() {
                           form.role === role && styles.selectedChipText,
                         ]}
                       >
-                        {role}
+                        {formatRole(role)}
                       </Text>
                     </TouchableOpacity>
                   ))}
                 </View>
 
-                <Text style={styles.label}>Resident Type</Text>
+                <Text style={styles.label}>{t("profile.residentType")}</Text>
 
                 <View style={styles.chipRow}>
                   {["OWNER", "TENANT"].map((type) => (
@@ -472,7 +473,7 @@ export default function AdminUsersScreen() {
                           form.residentType === type && styles.selectedChipText,
                         ]}
                       >
-                        {type}
+                        {formatResidentType(type)}
                       </Text>
                     </TouchableOpacity>
                   ))}
@@ -480,15 +481,15 @@ export default function AdminUsersScreen() {
 
                 {form.residentType === "TENANT" && (
                   <>
-                    <Text style={styles.label}>Select Owner</Text>
+                    <Text style={styles.label}>{t("adminUsers.selectOwner")}</Text>
 
                     {!selectedFlat?.flatId ? (
                       <Text style={styles.helperText}>
-                        Please select flat first.
+                        {t("adminUsers.selectFlatFirst")}
                       </Text>
                     ) : filteredOwners.length === 0 ? (
                       <Text style={styles.helperText}>
-                        No owner found for this flat. Please create owner first.
+                        {t("adminUsers.noOwnerForFlat")}
                       </Text>
                     ) : (
                       <View style={styles.ownerList}>
@@ -533,7 +534,8 @@ export default function AdminUsersScreen() {
                                     styles.ownerInfoActive,
                                 ]}
                               >
-                                Flat {owner.flatNumber} • {owner.phoneNumber}
+                                {t("home.flat")} {owner.flatNumber} •{" "}
+                                {owner.phoneNumber}
                               </Text>
                             </View>
                           </TouchableOpacity>
@@ -548,9 +550,7 @@ export default function AdminUsersScreen() {
                     styles.statusButton,
                     form.isActive ? styles.statusActive : styles.statusInactive,
                   ]}
-                  onPress={() =>
-                    setForm({ ...form, isActive: !form.isActive })
-                  }
+                  onPress={() => setForm({ ...form, isActive: !form.isActive })}
                   activeOpacity={0.85}
                 >
                   <Ionicons
@@ -571,7 +571,9 @@ export default function AdminUsersScreen() {
                         : styles.statusTextInactive,
                     ]}
                   >
-                    {form.isActive ? "Active User" : "Inactive User"}
+                    {form.isActive
+                      ? t("adminUsers.activeUser")
+                      : t("adminUsers.inactiveUser")}
                   </Text>
                 </TouchableOpacity>
 
@@ -585,7 +587,9 @@ export default function AdminUsersScreen() {
                     <ActivityIndicator color="#FFFFFF" />
                   ) : (
                     <Text style={styles.saveButtonText}>
-                      {editingUser ? "Update User" : "Create User"}
+                      {editingUser
+                        ? t("adminUsers.updateUser")
+                        : t("adminUsers.createUser")}
                     </Text>
                   )}
                 </TouchableOpacity>
@@ -596,7 +600,7 @@ export default function AdminUsersScreen() {
                   disabled={saving}
                   activeOpacity={0.85}
                 >
-                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                  <Text style={styles.cancelButtonText}>{t("common.cancel")}</Text>
                 </TouchableOpacity>
               </ScrollView>
             </KeyboardAvoidingView>
@@ -611,10 +615,42 @@ function InfoItem({ icon, value }) {
   return (
     <View style={styles.infoItem}>
       <Ionicons name={icon} size={16} color="#6B7280" />
-
       <Text style={styles.infoItemText}>{value}</Text>
     </View>
   );
+}
+
+function formatRole(role) {
+  if (!role) return "-";
+
+  switch (role.toUpperCase()) {
+    case "RESIDENT":
+      return t("adminUsers.roles.resident");
+
+    case "CASHIER":
+      return t("adminUsers.roles.cashier");
+
+    case "ADMIN":
+      return t("adminUsers.roles.admin");
+
+    default:
+      return role;
+  }
+}
+
+function formatResidentType(type) {
+  if (!type) return "-";
+
+  switch (type.toUpperCase()) {
+    case "OWNER":
+      return t("adminUsers.residentTypes.owner");
+
+    case "TENANT":
+      return t("adminUsers.residentTypes.tenant");
+
+    default:
+      return type;
+  }
 }
 
 const styles = StyleSheet.create({

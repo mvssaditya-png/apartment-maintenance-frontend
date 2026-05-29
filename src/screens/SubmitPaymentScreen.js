@@ -25,6 +25,8 @@ import {
   uploadReceiptImage,
 } from "../api/dashboardApi";
 
+import { t } from "../i18n";
+
 const PAYMENT_MODES = [
   "UPI",
   "BANK_TRANSFER",
@@ -56,8 +58,8 @@ export default function SubmitPaymentScreen({
 
     if (!permission.granted) {
       Alert.alert(
-        "Permission Required",
-        "Please allow gallery access."
+        t("submitPayment.permissionRequired"),
+        t("submitPayment.allowGalleryAccess")
       );
       return;
     }
@@ -77,8 +79,8 @@ export default function SubmitPaymentScreen({
   const handleSubmit = async () => {
     if (!selectedImage) {
       Alert.alert(
-        "Receipt Required",
-        "Please upload payment screenshot."
+        t("submitPayment.receiptRequired"),
+        t("submitPayment.uploadReceipt")
       );
       return;
     }
@@ -101,8 +103,8 @@ export default function SubmitPaymentScreen({
       });
 
       Alert.alert(
-        "Success",
-        "Payment submitted successfully.",
+        t("submitPayment.success"),
+        t("submitPayment.paymentSubmitted"),
         [
           {
             text: "OK",
@@ -118,8 +120,8 @@ export default function SubmitPaymentScreen({
       );
 
       Alert.alert(
-        "Error",
-        "Unable to submit payment."
+        t("submitPayment.error"),
+        t("submitPayment.submitFailed")
       );
     } finally {
       setLoading(false);
@@ -143,7 +145,7 @@ export default function SubmitPaymentScreen({
           <View style={styles.summaryTopRow}>
             <View style={styles.summaryContent}>
               <Text style={styles.summaryLabel}>
-                Payment Amount
+                {t("submitPayment.paymentAmount")}
               </Text>
 
               <Text style={styles.amount}>
@@ -175,7 +177,7 @@ export default function SubmitPaymentScreen({
         </AppCard>
 
         <Text style={styles.sectionTitle}>
-          Payment Mode
+          {t("submitPayment.paymentMode")}
         </Text>
 
         <View style={styles.modeGrid}>
@@ -227,7 +229,7 @@ export default function SubmitPaymentScreen({
 
         <AppCard style={styles.card}>
           <Text style={styles.label}>
-            Payment Screenshot
+            {t("submitPayment.paymentScreenshot")}
           </Text>
 
           <TouchableOpacity
@@ -256,7 +258,7 @@ export default function SubmitPaymentScreen({
                     styles.uploadTitle
                   }
                 >
-                  Receipt Selected
+                  {t("submitPayment.receiptSelected")}
                 </Text>
 
                 <Text
@@ -264,7 +266,7 @@ export default function SubmitPaymentScreen({
                     styles.uploadText
                   }
                 >
-                  Tap to preview image
+                  {t("submitPayment.tapToPreview")}
                 </Text>
               </>
             ) : (
@@ -288,7 +290,7 @@ export default function SubmitPaymentScreen({
                     styles.uploadTitle
                   }
                 >
-                  Upload Screenshot
+                  {t("submitPayment.uploadScreenshot")}
                 </Text>
 
                 <Text
@@ -296,15 +298,14 @@ export default function SubmitPaymentScreen({
                     styles.uploadText
                   }
                 >
-                  Select payment receipt
-                  from gallery
+                  {t("submitPayment.selectReceipt")}
                 </Text>
               </>
             )}
           </TouchableOpacity>
 
           <AppButton
-            title="Submit Payment"
+            title={t("submitPayment.submitPayment")}
             onPress={handleSubmit}
             loading={loading}
             style={styles.submitButton}
@@ -356,11 +357,22 @@ function getMonthName(monthNumber) {
 }
 
 function formatMode(mode) {
-  if (mode === "BANK_TRANSFER") {
-    return "Bank Transfer";
-  }
+  switch (mode) {
+    case "UPI":
+      return t("submitPayment.upi");
 
-  return mode;
+    case "BANK_TRANSFER":
+      return t("submitPayment.bankTransfer");
+
+    case "CASH":
+      return t("submitPayment.cash");
+
+    case "CHEQUE":
+      return t("submitPayment.cheque");
+
+    default:
+      return mode;
+  }
 }
 
 function getPaymentModeIcon(mode) {

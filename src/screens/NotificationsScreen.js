@@ -1,4 +1,5 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useContext, useState } from "react";
+
 import {
   View,
   Text,
@@ -8,6 +9,7 @@ import {
   RefreshControl,
   TouchableOpacity,
 } from "react-native";
+
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
@@ -17,7 +19,12 @@ import {
   markNotificationRead,
 } from "../api/dashboardApi";
 
+import { t } from "../i18n";
+import { LanguageContext } from "../context/LanguageContext";
+
 export default function NotificationsScreen() {
+  const { language } = useContext(LanguageContext);
+
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -31,7 +38,9 @@ export default function NotificationsScreen() {
   const loadNotifications = async () => {
     try {
       setLoading(true);
+
       const res = await getMyNotifications();
+
       setNotifications(res.data || []);
     } catch (error) {
       console.log("NOTIFICATIONS ERROR:", error?.response?.data || error);
@@ -62,7 +71,10 @@ export default function NotificationsScreen() {
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.loaderContainer}>
           <ActivityIndicator size="large" color="#2563EB" />
-          <Text style={styles.loaderText}>Loading notifications...</Text>
+
+          <Text style={styles.loaderText}>
+            {t("notifications.loading")}
+          </Text>
         </View>
       </SafeAreaView>
     );
@@ -77,14 +89,20 @@ export default function NotificationsScreen() {
         }
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.heading}>Notifications</Text>
+        <Text style={styles.heading}>
+          {t("notifications.title")}
+        </Text>
 
         {notifications.length === 0 ? (
           <View style={styles.emptyCard}>
             <Ionicons name="notifications-outline" size={46} color="#2563EB" />
-            <Text style={styles.emptyTitle}>No notifications</Text>
+
+            <Text style={styles.emptyTitle}>
+              {t("notifications.noNotifications")}
+            </Text>
+
             <Text style={styles.emptyText}>
-              Your society updates will appear here.
+              {t("notifications.noNotificationsSubtitle")}
             </Text>
           </View>
         ) : (
@@ -108,14 +126,21 @@ export default function NotificationsScreen() {
                 </View>
 
                 <View style={styles.textBlock}>
-                  <Text style={styles.title}>{item.title}</Text>
-                  <Text style={styles.date}>{formatDate(item.createdAt)}</Text>
+                  <Text style={styles.title}>
+                    {item.title}
+                  </Text>
+
+                  <Text style={styles.date}>
+                    {formatDate(item.createdAt)}
+                  </Text>
                 </View>
 
                 {!item.isRead && <View style={styles.unreadDot} />}
               </View>
 
-              <Text style={styles.message}>{item.message}</Text>
+              <Text style={styles.message}>
+                {item.message}
+              </Text>
             </TouchableOpacity>
           ))
         )}
@@ -128,11 +153,13 @@ function getIcon(type) {
   if (type === "NOTICE") return "megaphone-outline";
   if (type === "DUE_REMINDER") return "alarm-outline";
   if (type === "PAYMENT") return "wallet-outline";
+
   return "notifications-outline";
 }
 
 function formatDate(value) {
   if (!value) return "-";
+
   const date = new Date(value);
 
   if (isNaN(date.getTime())) {

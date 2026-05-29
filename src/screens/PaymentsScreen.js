@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from "react";
-
+import React, { useContext, useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -13,8 +12,9 @@ import { Ionicons } from "@expo/vector-icons";
 
 import { getLoggedInUser } from "../api/dashboardApi";
 import { t } from "../i18n";
-
+import { LanguageContext } from "../context/LanguageContext";
 export default function PaymentsScreen({ navigation }) {
+  const { language } = useContext(LanguageContext);
   const [user, setUser] = useState(null);
 
   useEffect(() => {

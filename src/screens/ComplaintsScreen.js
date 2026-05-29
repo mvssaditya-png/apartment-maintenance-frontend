@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useContext, useState } from "react";
 
 import {
   View,
@@ -35,6 +35,8 @@ import EmptyState from "../components/common/EmptyState";
 import StatusBadge from "../components/common/StatusBadge";
 
 import { COLORS } from "../components/common/theme";
+import { t } from "../i18n";
+import { LanguageContext } from "../context/LanguageContext";
 
 const CATEGORIES = [
   "WATER",
@@ -54,48 +56,26 @@ const STATUSES = [
 ];
 
 export default function ComplaintsScreen() {
+  const { language } = useContext(LanguageContext);
+
   const [user, setUser] = useState(null);
+  const [complaints, setComplaints] = useState([]);
 
-  const [complaints, setComplaints] =
-    useState([]);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [category, setCategory] = useState("MAINTENANCE");
 
-  const [title, setTitle] =
-    useState("");
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [previewImageUrl, setPreviewImageUrl] = useState(null);
 
-  const [description, setDescription] =
-    useState("");
+  const [selectedComplaint, setSelectedComplaint] = useState(null);
+  const [status, setStatus] = useState("IN_PROGRESS");
+  const [adminResponse, setAdminResponse] = useState("");
 
-  const [category, setCategory] =
-    useState("MAINTENANCE");
-
-  const [selectedImage, setSelectedImage] =
-    useState(null);
-
-  const [previewImageUrl, setPreviewImageUrl] =
-    useState(null);
-
-  const [
-    selectedComplaint,
-    setSelectedComplaint,
-  ] = useState(null);
-
-  const [status, setStatus] =
-    useState("IN_PROGRESS");
-
-  const [adminResponse, setAdminResponse] =
-    useState("");
-
-  const [loading, setLoading] =
-    useState(true);
-
-  const [saving, setSaving] =
-    useState(false);
-
-  const [statusSaving, setStatusSaving] =
-    useState(false);
-
-  const [refreshing, setRefreshing] =
-    useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [statusSaving, setStatusSaving] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -107,30 +87,17 @@ export default function ComplaintsScreen() {
     try {
       setLoading(true);
 
-      const [
-        userRes,
-        complaintsRes,
-      ] = await Promise.all([
+      const [userRes, complaintsRes] = await Promise.all([
         getLoggedInUser(),
         getComplaints(),
       ]);
 
       setUser(userRes.data);
-
-      setComplaints(
-        complaintsRes.data || []
-      );
+      setComplaints(complaintsRes.data || []);
     } catch (error) {
-      console.log(
-        "COMPLAINTS ERROR:",
-        error?.response?.data ||
-          error
-      );
+      console.log("COMPLAINTS ERROR:", error?.response?.data || error);
 
-      Alert.alert(
-        "Error",
-        "Unable to load complaints."
-      );
+      Alert.alert(t("common.error"), t("complaints.loadFailed"));
     } finally {
       setLoading(false);
     }
@@ -138,17 +105,13 @@ export default function ComplaintsScreen() {
 
   const onRefresh = async () => {
     setRefreshing(true);
-
     await loadData();
-
     setRefreshing(false);
   };
 
   const isAdminOrCashier =
-    user?.role?.toUpperCase() ===
-      "ADMIN" ||
-    user?.role?.toUpperCase() ===
-      "CASHIER";
+    user?.role?.toUpperCase() === "ADMIN" ||
+    user?.role?.toUpperCase() === "CASHIER";
 
   const resetForm = () => {
     setTitle("");
@@ -169,189 +132,131 @@ export default function ComplaintsScreen() {
 
     if (!permission.granted) {
       Alert.alert(
-        "Permission Required",
-        "Please allow gallery access."
+        t("submitPayment.permissionRequired"),
+        t("submitPayment.allowGalleryAccess")
       );
-
       return;
     }
 
-    const result =
-      await ImagePicker.launchImageLibraryAsync({
-        mediaTypes:
-          ImagePicker.MediaTypeOptions.Images,
-        quality: 0.8,
-      });
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.8,
+    });
 
     if (!result.canceled) {
-      setSelectedImage(
-        result.assets[0]
-      );
+      setSelectedImage(result.assets[0]);
     }
   };
 
-  const getFullImageUrl = (
-    url
-  ) => {
+  const getFullImageUrl = (url) => {
     if (!url) return null;
 
     if (url.startsWith("http")) {
       return url;
     }
 
-    return (
-      API.defaults.baseURL.replace(
-        "/api",
-        ""
-      ) + url
-    );
+    return API.defaults.baseURL.replace("/api", "") + url;
   };
 
-  const handleCreateComplaint =
-    async () => {
-      if (!title.trim()) {
-        Alert.alert(
-          "Validation Error",
-          "Please enter complaint title."
-        );
+  const handleCreateComplaint = async () => {
+    if (!title.trim()) {
+      Alert.alert(
+        t("addExpense.validationError"),
+        t("complaints.enterTitle")
+      );
+      return;
+    }
 
-        return;
+    if (!description.trim()) {
+      Alert.alert(
+        t("addExpense.validationError"),
+        t("complaints.enterDescription")
+      );
+      return;
+    }
+
+    try {
+      setSaving(true);
+
+      let imageUrl = "";
+
+      if (selectedImage) {
+        const uploadRes = await uploadReceiptImage(selectedImage);
+        imageUrl = uploadRes.data.fileUrl;
       }
 
-      if (!description.trim()) {
-        Alert.alert(
-          "Validation Error",
-          "Please enter complaint description."
-        );
+      await createComplaint({
+        title: title.trim(),
+        description: description.trim(),
+        category,
+        imageUrl,
+      });
 
-        return;
-      }
+      Alert.alert(
+        t("common.success"),
+        t("complaints.createSuccess")
+      );
 
-      try {
-        setSaving(true);
+      resetForm();
+      await loadData();
+    } catch (error) {
+      console.log("CREATE COMPLAINT ERROR:", error?.response?.data || error);
 
-        let imageUrl = "";
+      Alert.alert(
+        t("common.error"),
+        t("complaints.createFailed")
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
 
-        if (selectedImage) {
-          const uploadRes =
-            await uploadReceiptImage(
-              selectedImage
-            );
-
-          imageUrl =
-            uploadRes.data.fileUrl;
-        }
-
-        await createComplaint({
-          title: title.trim(),
-          description:
-            description.trim(),
-          category,
-          imageUrl,
-        });
-
-        Alert.alert(
-          "Success",
-          "Complaint raised successfully."
-        );
-
-        resetForm();
-
-        await loadData();
-      } catch (error) {
-        console.log(
-          "CREATE COMPLAINT ERROR:",
-          error?.response?.data ||
-            error
-        );
-
-        Alert.alert(
-          "Error",
-          "Unable to raise complaint."
-        );
-      } finally {
-        setSaving(false);
-      }
-    };
-
-  const startStatusUpdate = (
-    item
-  ) => {
+  const startStatusUpdate = (item) => {
     setSelectedComplaint(item);
-
-    setStatus(
-      item.status ||
-        "IN_PROGRESS"
-    );
-
-    setAdminResponse(
-      item.adminResponse || ""
-    );
+    setStatus(item.status || "IN_PROGRESS");
+    setAdminResponse(item.adminResponse || "");
   };
 
-  const handleUpdateStatus =
-    async () => {
-      if (!selectedComplaint) {
-        return;
-      }
+  const handleUpdateStatus = async () => {
+    if (!selectedComplaint) {
+      return;
+    }
 
-      try {
-        setStatusSaving(true);
+    try {
+      setStatusSaving(true);
 
-        await updateComplaintStatus(
-          selectedComplaint.complaintId,
-          {
-            status,
-            adminResponse:
-              adminResponse.trim(),
-          }
-        );
+      await updateComplaintStatus(selectedComplaint.complaintId, {
+        status,
+        adminResponse: adminResponse.trim(),
+      });
 
-        Alert.alert(
-          "Success",
-          "Complaint status updated."
-        );
+      Alert.alert(
+        t("common.success"),
+        t("complaints.updateSuccess")
+      );
 
-        resetStatusForm();
+      resetStatusForm();
+      await loadData();
+    } catch (error) {
+      console.log("UPDATE COMPLAINT ERROR:", error?.response?.data || error);
 
-        await loadData();
-      } catch (error) {
-        console.log(
-          "UPDATE COMPLAINT ERROR:",
-          error?.response?.data ||
-            error
-        );
-
-        Alert.alert(
-          "Error",
-          "Unable to update complaint."
-        );
-      } finally {
-        setStatusSaving(false);
-      }
-    };
+      Alert.alert(
+        t("common.error"),
+        t("complaints.updateFailed")
+      );
+    } finally {
+      setStatusSaving(false);
+    }
+  };
 
   if (loading) {
     return (
-      <SafeAreaView
-        style={styles.safeArea}
-      >
-        <View
-          style={
-            styles.loaderContainer
-          }
-        >
-          <ActivityIndicator
-            size="large"
-            color={COLORS.primary}
-          />
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.loaderContainer}>
+          <ActivityIndicator size="large" color={COLORS.primary} />
 
-          <Text
-            style={
-              styles.loaderText
-            }
-          >
-            Loading complaints...
+          <Text style={styles.loaderText}>
+            {t("complaints.loading")}
           </Text>
         </View>
       </SafeAreaView>
@@ -359,537 +264,348 @@ export default function ComplaintsScreen() {
   }
 
   return (
-    <SafeAreaView
-      style={styles.safeArea}
-      edges={["bottom"]}
-    >
+    <SafeAreaView style={styles.safeArea} edges={["bottom"]}>
       <ScrollView
-        contentContainerStyle={
-          styles.container
-        }
+        contentContainerStyle={styles.container}
         refreshControl={
           <RefreshControl
-            refreshing={
-              refreshing
-            }
+            refreshing={refreshing}
             onRefresh={onRefresh}
-            colors={[
-              COLORS.primary,
-            ]}
-            tintColor={
-              COLORS.primary
-            }
+            colors={[COLORS.primary]}
+            tintColor={COLORS.primary}
           />
         }
-        showsVerticalScrollIndicator={
-          false
-        }
+        showsVerticalScrollIndicator={false}
       >
-        <View
-          style={
-            styles.headerCard
-          }
-        >
+        <View style={styles.headerCard}>
           <Ionicons
             name="chatbox-ellipses-outline"
             size={42}
             color="#FFFFFF"
           />
 
-          <Text
-            style={styles.heading}
-          >
-            Complaints
+          <Text style={styles.heading}>
+            {t("complaints.title")}
           </Text>
 
-          <Text
-            style={
-              styles.subtitle
-            }
-          >
-            Raise and track
-            apartment maintenance
-            issues.
+          <Text style={styles.subtitle}>
+            {t("complaints.subtitle")}
           </Text>
         </View>
 
-        <AppCard
-          style={styles.formCard}
-        >
-          <Text
-            style={
-              styles.formTitle
-            }
-          >
-            Raise Complaint
+        <AppCard style={styles.formCard}>
+          <Text style={styles.formTitle}>
+            {t("complaints.raiseComplaint")}
           </Text>
 
           <AppInput
-            label="Title"
-            placeholder="Example: Water leakage"
+            label={t("complaints.complaintTitle")}
+            placeholder={t("complaints.titlePlaceholder")}
             value={title}
             onChangeText={setTitle}
           />
 
           <AppInput
-            label="Description"
-            placeholder="Explain the issue..."
+            label={t("addExpense.description")}
+            placeholder={t("complaints.descriptionPlaceholder")}
             value={description}
-            onChangeText={
-              setDescription
-            }
+            onChangeText={setDescription}
             multiline
           />
 
-          <Text
-            style={styles.label}
-          >
-            Category
+          <Text style={styles.label}>
+            {t("addExpense.category")}
           </Text>
 
-          <View
-            style={styles.chipGrid}
-          >
-            {CATEGORIES.map(
-              (item) => (
-                <TouchableOpacity
-                  key={item}
+          <View style={styles.chipGrid}>
+            {CATEGORIES.map((item) => (
+              <TouchableOpacity
+                key={item}
+                style={[
+                  styles.chip,
+                  category === item && styles.chipActive,
+                ]}
+                onPress={() => setCategory(item)}
+              >
+                <Text
                   style={[
-                    styles.chip,
-                    category ===
-                      item &&
-                      styles.chipActive,
+                    styles.chipText,
+                    category === item && styles.chipTextActive,
                   ]}
-                  onPress={() =>
-                    setCategory(
-                      item
-                    )
-                  }
                 >
-                  <Text
-                    style={[
-                      styles.chipText,
-                      category ===
-                        item &&
-                        styles.chipTextActive,
-                    ]}
-                  >
-                    {formatText(
-                      item
-                    )}
-                  </Text>
-                </TouchableOpacity>
-              )
-            )}
+                  {formatComplaintCategory(item)}
+                </Text>
+              </TouchableOpacity>
+            ))}
           </View>
 
-          <Text
-            style={styles.label}
-          >
-            Image Optional
+          <Text style={styles.label}>
+            {t("complaints.imageOptional")}
           </Text>
 
           <TouchableOpacity
-            style={
-              styles.uploadBox
-            }
+            style={styles.uploadBox}
             onPress={() => {
-              if (
-                selectedImage
-              ) {
-                setPreviewImageUrl(
-                  selectedImage.uri
-                );
+              if (selectedImage) {
+                setPreviewImageUrl(selectedImage.uri);
               } else {
                 pickImage();
               }
             }}
             activeOpacity={0.85}
           >
-            <View
-              style={
-                styles.uploadIconCircle
-              }
-            >
+            <View style={styles.uploadIconCircle}>
               <Ionicons
                 name="cloud-upload-outline"
                 size={34}
-                color={
-                  COLORS.primary
-                }
+                color={COLORS.primary}
               />
             </View>
 
-            <Text
-              style={
-                styles.uploadTitle
-              }
-            >
+            <Text style={styles.uploadTitle}>
               {selectedImage
-                ? "Image Selected"
-                : "Upload Image"}
+                ? t("complaints.imageSelected")
+                : t("complaints.uploadImage")}
             </Text>
 
-            <Text
-              style={
-                styles.uploadText
-              }
-            >
+            <Text style={styles.uploadText}>
               {selectedImage
-                ? "Tap to preview image"
-                : "Select image from gallery"}
+                ? t("submitPayment.tapToPreview")
+                : t("complaints.selectImage")}
             </Text>
           </TouchableOpacity>
 
           {selectedImage && (
             <AppButton
-              title="Change Image"
+              title={t("complaints.changeImage")}
               variant="secondary"
               onPress={pickImage}
-              style={
-                styles.changeButton
-              }
+              style={styles.changeButton}
             />
           )}
 
           <AppButton
-            title="Submit Complaint"
-            onPress={
-              handleCreateComplaint
-            }
+            title={t("complaints.submitComplaint")}
+            onPress={handleCreateComplaint}
             loading={saving}
           />
         </AppCard>
 
-        {selectedComplaint &&
-          isAdminOrCashier && (
-            <AppCard
-              style={
-                styles.formCard
-              }
-            >
-              <Text
-                style={
-                  styles.formTitle
-                }
-              >
-                Update Complaint
-              </Text>
+        {selectedComplaint && isAdminOrCashier && (
+          <AppCard style={styles.formCard}>
+            <Text style={styles.formTitle}>
+              {t("complaints.updateComplaint")}
+            </Text>
 
-              <Text
-                style={
-                  styles.selectedTitle
-                }
-              >
-                {
-                  selectedComplaint.title
-                }
-              </Text>
+            <Text style={styles.selectedTitle}>
+              {selectedComplaint.title}
+            </Text>
 
-              <Text
-                style={
-                  styles.label
-                }
-              >
-                Status
-              </Text>
+            <Text style={styles.label}>
+              {t("complaints.status")}
+            </Text>
 
-              <View
-                style={
-                  styles.chipGrid
-                }
-              >
-                {STATUSES.map(
-                  (item) => (
-                    <TouchableOpacity
-                      key={item}
-                      style={[
-                        styles.chip,
-                        status ===
-                          item &&
-                          styles.chipActive,
-                      ]}
-                      onPress={() =>
-                        setStatus(
-                          item
-                        )
-                      }
-                    >
-                      <Text
-                        style={[
-                          styles.chipText,
-                          status ===
-                            item &&
-                            styles.chipTextActive,
-                        ]}
-                      >
-                        {formatText(
-                          item
-                        )}
-                      </Text>
-                    </TouchableOpacity>
-                  )
-                )}
-              </View>
+            <View style={styles.chipGrid}>
+              {STATUSES.map((item) => (
+                <TouchableOpacity
+                  key={item}
+                  style={[
+                    styles.chip,
+                    status === item && styles.chipActive,
+                  ]}
+                  onPress={() => setStatus(item)}
+                >
+                  <Text
+                    style={[
+                      styles.chipText,
+                      status === item && styles.chipTextActive,
+                    ]}
+                  >
+                    {formatComplaintStatus(item)}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
 
-              <AppInput
-                label="Admin Response"
-                placeholder="Write response..."
-                value={
-                  adminResponse
-                }
-                onChangeText={
-                  setAdminResponse
-                }
-                multiline
-              />
+            <AppInput
+              label={t("complaints.adminResponse")}
+              placeholder={t("complaints.responsePlaceholder")}
+              value={adminResponse}
+              onChangeText={setAdminResponse}
+              multiline
+            />
 
-              <AppButton
-                title="Update Status"
-                onPress={
-                  handleUpdateStatus
-                }
-                loading={
-                  statusSaving
-                }
-              />
+            <AppButton
+              title={t("complaints.updateStatus")}
+              onPress={handleUpdateStatus}
+              loading={statusSaving}
+            />
 
-              <AppButton
-                title="Cancel"
-                variant="secondary"
-                onPress={
-                  resetStatusForm
-                }
-                style={
-                  styles.cancelButton
-                }
-              />
-            </AppCard>
-          )}
+            <AppButton
+              title={t("common.cancel")}
+              variant="secondary"
+              onPress={resetStatusForm}
+              style={styles.cancelButton}
+            />
+          </AppCard>
+        )}
 
-        <Text
-          style={
-            styles.sectionTitle
-          }
-        >
+        <Text style={styles.sectionTitle}>
           {isAdminOrCashier
-            ? "All Complaints"
-            : "My Complaints"}
+            ? t("complaints.allComplaints")
+            : t("complaints.myComplaints")}
         </Text>
 
-        {complaints.length ===
-        0 ? (
+        {complaints.length === 0 ? (
           <AppCard>
             <EmptyState
               icon="chatbox-outline"
-              title="No complaints found"
-              subtitle="Complaints will appear here."
+              title={t("complaints.noComplaints")}
+              subtitle={t("complaints.noComplaintsSubtitle")}
             />
           </AppCard>
         ) : (
-          complaints.map(
-            (item) => (
-              <AppCard
-                key={
-                  item.complaintId
-                }
-                style={
-                  styles.complaintCard
-                }
-              >
-                <View
-                  style={
-                    styles.complaintTop
-                  }
-                >
-                  <View
-                    style={
-                      styles.iconBox
-                    }
-                  >
-                    <Ionicons
-                      name="construct-outline"
-                      size={24}
-                      color={
-                        COLORS.primary
-                      }
-                    />
-                  </View>
-
-                  <View
-                    style={
-                      styles.complaintTextBlock
-                    }
-                  >
-                    <Text
-                      style={
-                        styles.complaintTitle
-                      }
-                    >
-                      {item.title}
-                    </Text>
-
-                    <Text
-                      style={
-                        styles.complaintDate
-                      }
-                    >
-                      {formatDate(
-                        item.createdAt
-                      )}
-                    </Text>
-                  </View>
-
-                  <StatusBadge
-                    status={
-                      item.status
-                    }
+          complaints.map((item) => (
+            <AppCard key={item.complaintId} style={styles.complaintCard}>
+              <View style={styles.complaintTop}>
+                <View style={styles.iconBox}>
+                  <Ionicons
+                    name="construct-outline"
+                    size={24}
+                    color={COLORS.primary}
                   />
                 </View>
 
-                <Text
-                  style={
-                    styles.categoryText
+                <View style={styles.complaintTextBlock}>
+                  <Text style={styles.complaintTitle}>
+                    {item.title}
+                  </Text>
+
+                  <Text style={styles.complaintDate}>
+                    {formatDate(item.createdAt)}
+                  </Text>
+                </View>
+
+                <StatusBadge status={item.status} />
+              </View>
+
+              <Text style={styles.categoryText}>
+                {formatComplaintCategory(item.category || "OTHER")}
+              </Text>
+
+              <Text style={styles.description}>
+                {item.description}
+              </Text>
+
+              {item.imageUrl ? (
+                <TouchableOpacity
+                  style={styles.previewBox}
+                  onPress={() =>
+                    setPreviewImageUrl(getFullImageUrl(item.imageUrl))
                   }
+                  activeOpacity={0.85}
                 >
-                  {formatText(
-                    item.category ||
-                      "OTHER"
-                  )}
-                </Text>
-
-                <Text
-                  style={
-                    styles.description
-                  }
-                >
-                  {
-                    item.description
-                  }
-                </Text>
-
-                {item.imageUrl ? (
-                  <TouchableOpacity
-                    style={
-                      styles.previewBox
-                    }
-                    onPress={() =>
-                      setPreviewImageUrl(
-                        getFullImageUrl(
-                          item.imageUrl
-                        )
-                      )
-                    }
-                    activeOpacity={
-                      0.85
-                    }
-                  >
-                    <View
-                      style={
-                        styles.previewIconCircle
-                      }
-                    >
-                      <Ionicons
-                        name="image-outline"
-                        size={30}
-                        color={
-                          COLORS.primary
-                        }
-                      />
-                    </View>
-
-                    <Text
-                      style={
-                        styles.previewTitle
-                      }
-                    >
-                      Image Attached
-                    </Text>
-
-                    <Text
-                      style={
-                        styles.previewText
-                      }
-                    >
-                      Tap to view image
-                    </Text>
-                  </TouchableOpacity>
-                ) : null}
-
-                {item.adminResponse ? (
-                  <View
-                    style={
-                      styles.responseBox
-                    }
-                  >
-                    <Text
-                      style={
-                        styles.responseLabel
-                      }
-                    >
-                      Admin Response
-                    </Text>
-
-                    <Text
-                      style={
-                        styles.responseText
-                      }
-                    >
-                      {
-                        item.adminResponse
-                      }
-                    </Text>
+                  <View style={styles.previewIconCircle}>
+                    <Ionicons
+                      name="image-outline"
+                      size={30}
+                      color={COLORS.primary}
+                    />
                   </View>
-                ) : null}
 
-                {isAdminOrCashier && (
-                  <AppButton
-                    title="Update Complaint"
-                    variant="outline"
-                    onPress={() =>
-                      startStatusUpdate(
-                        item
-                      )
-                    }
-                    style={
-                      styles.updateButton
-                    }
-                  />
-                )}
-              </AppCard>
-            )
-          )
+                  <Text style={styles.previewTitle}>
+                    {t("complaints.imageAttached")}
+                  </Text>
+
+                  <Text style={styles.previewText}>
+                    {t("viewExpenses.tapToViewImage")}
+                  </Text>
+                </TouchableOpacity>
+              ) : null}
+
+              {item.adminResponse ? (
+                <View style={styles.responseBox}>
+                  <Text style={styles.responseLabel}>
+                    {t("complaints.adminResponse")}
+                  </Text>
+
+                  <Text style={styles.responseText}>
+                    {item.adminResponse}
+                  </Text>
+                </View>
+              ) : null}
+
+              {isAdminOrCashier && (
+                <AppButton
+                  title={t("complaints.updateComplaint")}
+                  variant="outline"
+                  onPress={() => startStatusUpdate(item)}
+                  style={styles.updateButton}
+                />
+              )}
+            </AppCard>
+          ))
         )}
 
         <ImagePreviewModal
-          visible={
-            !!previewImageUrl
-          }
-          imageUrl={
-            previewImageUrl
-          }
-          onClose={() =>
-            setPreviewImageUrl(
-              null
-            )
-          }
+          visible={!!previewImageUrl}
+          imageUrl={previewImageUrl}
+          onClose={() => setPreviewImageUrl(null)}
         />
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-function formatText(value) {
+function formatComplaintCategory(value) {
   if (!value) return "-";
 
-  return value
-    .replace("_", " ")
-    .toLowerCase()
-    .replace(
-      /\b\w/g,
-      (char) =>
-        char.toUpperCase()
-    );
+  switch (value) {
+    case "WATER":
+      return t("addExpense.categories.water");
+
+    case "ELECTRICITY":
+      return t("addExpense.categories.electricity");
+
+    case "CLEANING":
+      return t("addExpense.categories.cleaning");
+
+    case "SECURITY":
+      return t("addExpense.categories.security");
+
+    case "PARKING":
+      return t("complaints.categories.parking");
+
+    case "MAINTENANCE":
+      return t("addExpense.categories.maintenance");
+
+    case "OTHER":
+      return t("addExpense.categories.other");
+
+    default:
+      return value;
+  }
+}
+
+function formatComplaintStatus(value) {
+  if (!value) return "-";
+
+  switch (value) {
+    case "OPEN":
+      return t("complaints.statuses.open");
+
+    case "IN_PROGRESS":
+      return t("complaints.statuses.inProgress");
+
+    case "RESOLVED":
+      return t("complaints.statuses.resolved");
+
+    case "REJECTED":
+      return t("complaints.statuses.rejected");
+
+    default:
+      return value;
+  }
 }
 
 function formatDate(value) {
@@ -898,26 +614,20 @@ function formatDate(value) {
   const date = new Date(value);
 
   if (isNaN(date.getTime())) {
-    return String(
-      value
-    ).substring(0, 10);
+    return String(value).substring(0, 10);
   }
 
-  return date.toLocaleDateString(
-    "en-IN",
-    {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    }
-  );
+  return date.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
 }
 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor:
-      COLORS.background,
+    backgroundColor: COLORS.background,
   },
 
   container: {
@@ -927,21 +637,18 @@ const styles = StyleSheet.create({
 
   loaderContainer: {
     flex: 1,
-    justifyContent:
-      "center",
+    justifyContent: "center",
     alignItems: "center",
   },
 
   loaderText: {
     marginTop: 10,
-    color:
-      COLORS.textMuted,
+    color: COLORS.textMuted,
     fontWeight: "600",
   },
 
   headerCard: {
-    backgroundColor:
-      COLORS.primary,
+    backgroundColor: COLORS.primary,
     borderRadius: 28,
     padding: 24,
     marginBottom: 24,
@@ -984,8 +691,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: "800",
-    color:
-      COLORS.textSecondary,
+    color: COLORS.textSecondary,
     marginBottom: 10,
   },
 
@@ -999,8 +705,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 13,
     paddingVertical: 10,
     borderRadius: 14,
-    backgroundColor:
-      "#F9FAFB",
+    backgroundColor: "#F9FAFB",
     borderWidth: 1,
     borderColor: "#D1D5DB",
     marginRight: 8,
@@ -1008,15 +713,12 @@ const styles = StyleSheet.create({
   },
 
   chipActive: {
-    backgroundColor:
-      COLORS.primary,
-    borderColor:
-      COLORS.primary,
+    backgroundColor: COLORS.primary,
+    borderColor: COLORS.primary,
   },
 
   chipText: {
-    color:
-      COLORS.textSecondary,
+    color: COLORS.textSecondary,
     fontWeight: "800",
     fontSize: 13,
   },
@@ -1041,11 +743,9 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 24,
-    backgroundColor:
-      "#EEF5FF",
+    backgroundColor: "#EEF5FF",
     alignItems: "center",
-    justifyContent:
-      "center",
+    justifyContent: "center",
     marginBottom: 14,
   },
 
@@ -1057,8 +757,7 @@ const styles = StyleSheet.create({
 
   uploadText: {
     fontSize: 13,
-    color:
-      COLORS.textMuted,
+    color: COLORS.textMuted,
     marginTop: 5,
     fontWeight: "600",
   },
@@ -1092,11 +791,9 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 18,
-    backgroundColor:
-      "#EEF5FF",
+    backgroundColor: "#EEF5FF",
     alignItems: "center",
-    justifyContent:
-      "center",
+    justifyContent: "center",
     marginRight: 12,
   },
 
@@ -1113,24 +810,21 @@ const styles = StyleSheet.create({
 
   complaintDate: {
     fontSize: 12,
-    color:
-      COLORS.textMuted,
+    color: COLORS.textMuted,
     marginTop: 4,
     fontWeight: "600",
   },
 
   categoryText: {
     marginTop: 15,
-    color:
-      COLORS.primary,
+    color: COLORS.primary,
     fontWeight: "900",
     fontSize: 13,
   },
 
   description: {
     fontSize: 14,
-    color:
-      COLORS.textSecondary,
+    color: COLORS.textSecondary,
     marginTop: 8,
     lineHeight: 22,
     fontWeight: "500",
@@ -1151,11 +845,9 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 22,
-    backgroundColor:
-      "#DBEAFE",
+    backgroundColor: "#DBEAFE",
     alignItems: "center",
-    justifyContent:
-      "center",
+    justifyContent: "center",
     marginBottom: 12,
   },
 
@@ -1167,8 +859,7 @@ const styles = StyleSheet.create({
 
   previewText: {
     fontSize: 13,
-    color:
-      COLORS.textMuted,
+    color: COLORS.textMuted,
     marginTop: 4,
     fontWeight: "600",
   },
@@ -1177,14 +868,12 @@ const styles = StyleSheet.create({
     marginTop: 16,
     padding: 14,
     borderRadius: 16,
-    backgroundColor:
-      "#F9FAFB",
+    backgroundColor: "#F9FAFB",
   },
 
   responseLabel: {
     fontSize: 12,
-    color:
-      COLORS.textMuted,
+    color: COLORS.textMuted,
     fontWeight: "900",
     marginBottom: 6,
   },
