@@ -7,6 +7,7 @@ export default {
     loading: "Loading...",
     error: "Error",
     success: "Success",
+    back: "Back",
   },
 
   login: {
@@ -532,5 +533,30 @@ export default {
     downloadedSuccess: "Excel file downloaded successfully.",
     shareReport: "Share Defaulters Report",
     pending: "Pending",
+  },
+  tabs: {
+    home: "Home",
+    payments: "Payments",
+    expenses: "Expenses",
+    profile: "Profile",
+  },
+  navigation: {
+    openingBalance: "Opening Balance",
+    paymentRequest: "Payment Request",
+    myDues: "My Dues",
+    submitPayment: "Submit Payment",
+    submittedPayments: "Submitted Payments",
+    addExpense: "Add Expense",
+    viewExpenses: "View Expenses",
+    defaulters: "Defaulters",
+    recordPayment: "Record Payment",
+    paymentHistory: "Payment History",
+    manageUsers: "Manage Users",
+    scheduledPayments: "Scheduled Payments",
+    notices: "Notices",
+    notifications: "Notifications",
+    sosEmergency: "SOS Emergency",
+    meetings: "Meetings",
+    complaints: "Complaints",
   },
 };

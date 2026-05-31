@@ -7,6 +7,7 @@ export default {
     loading: "లోడ్ అవుతోంది...",
     error: "లోపం",
     success: "విజయం",
+    back: "వెనక్కి",
   },
 
   login: {
@@ -532,5 +533,30 @@ export default {
     downloaded: "డౌన్‌లోడ్ అయింది",
     downloadedSuccess: "ఎక్సెల్ ఫైల్ విజయవంతంగా డౌన్‌లోడ్ అయింది.",
     shareReport: "డిఫాల్టర్ నివేదికను పంచుకోండి",
+  },
+  tabs: {
+    home: "హోమ్",
+    payments: "చెల్లింపులు",
+    expenses: "ఖర్చులు",
+    profile: "ప్రొఫైల్",
+  },
+  navigation: {
+    openingBalance: "ప్రారంభ బ్యాలెన్స్",
+    paymentRequest: "చెల్లింపు అభ్యర్థన",
+    myDues: "నా బకాయిలు",
+    submitPayment: "చెల్లింపు సమర్పించండి",
+    submittedPayments: "సమర్పించిన చెల్లింపులు",
+    addExpense: "ఖర్చు జోడించండి",
+    viewExpenses: "ఖర్చులు చూడండి",
+    defaulters: "బకాయిదారులు",
+    recordPayment: "చెల్లింపు నమోదు",
+    paymentHistory: "చెల్లింపు చరిత్ర",
+    manageUsers: "యూజర్ల నిర్వహణ",
+    scheduledPayments: "షెడ్యూల్ చెల్లింపులు",
+    notices: "నోటీసులు",
+    notifications: "నోటిఫికేషన్లు",
+    sosEmergency: "SOS అత్యవసరం",
+    meetings: "సమావేశాలు",
+    complaints: "ఫిర్యాదులు",
   },
 };

@@ -6,9 +6,9 @@ import LoginScreen from "../screens/LoginScreen";
 import OtpScreen from "../screens/OtpScreen";
 import SplashScreen from "../screens/SplashScreen";
 import BottomTabs from "./BottomTabs";
+
 import OpeningBalanceScreen from "../screens/OpeningBalanceScreen";
 import PaymentRequestScreen from "../screens/PaymentRequestScreen";
-import { AuthContext } from "../context/AuthContext";
 import MyDuesScreen from "../screens/MyDuesScreen";
 import SubmitPaymentScreen from "../screens/SubmitPaymentScreen";
 import SubmittedPaymentsScreen from "../screens/SubmittedPaymentsScreen";
@@ -25,15 +25,28 @@ import NotificationsScreen from "../screens/NotificationsScreen";
 import SOSScreen from "../screens/SOSScreen";
 import MeetingsScreen from "../screens/MeetingsScreen";
 import ComplaintsScreen from "../screens/ComplaintsScreen";
+
+import { AuthContext } from "../context/AuthContext";
+import { LanguageContext } from "../context/LanguageContext";
+import { t } from "../i18n";
+
 const Stack = createNativeStackNavigator();
 
 export default function AppNavigator() {
   const { userToken, isLoading } = useContext(AuthContext);
+  const { language } = useContext(LanguageContext);
 
   if (isLoading) {
     return <SplashScreen />;
   }
 
+  const headerOptions = (title) => ({
+    headerShown: true,
+    title,
+    headerBackTitle: t("common.back"),
+    headerBackTitleVisible: false,
+    headerTitleAlign: "center",
+  });
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -47,175 +60,115 @@ export default function AppNavigator() {
             <Stack.Screen
               name="OpeningBalance"
               component={OpeningBalanceScreen}
-              options={{
-                headerShown: true,
-                title: "Opening Balance",
-                headerBackTitleVisible: false,
-              }}
+              options={headerOptions(t("navigation.openingBalance"))}
             />
+
             <Stack.Screen
               name="PaymentRequest"
               component={PaymentRequestScreen}
-              options={{
-                headerShown: true,
-                title: "Payment Request",
-                headerBackTitleVisible: false,
-              }}
+              options={headerOptions(t("navigation.paymentRequest"))}
             />
+
             <Stack.Screen
               name="MyDues"
               component={MyDuesScreen}
-              options={{
-                headerShown: true,
-                title: "My Dues",
-                headerBackTitleVisible: false,
-              }}
+              options={headerOptions(t("navigation.myDues"))}
             />
+
             <Stack.Screen
               name="SubmitPayment"
               component={SubmitPaymentScreen}
-              options={{
-                headerShown: true,
-                title: "Submit Payment",
-                headerBackTitleVisible: false,
-              }}
+              options={headerOptions(t("navigation.submitPayment"))}
             />
+
             <Stack.Screen
               name="SubmittedPayments"
               component={SubmittedPaymentsScreen}
-              options={{
-                headerShown: true,
-                title: "Submitted Payments",
-                headerBackTitleVisible: false,
-              }}
+              options={headerOptions(t("navigation.submittedPayments"))}
             />
+
             <Stack.Screen
               name="AddExpense"
               component={AddExpenseScreen}
-              options={{
-                headerShown: true,
-                title: "Add Expense",
-                headerBackTitleVisible: false,
-              }}
+              options={headerOptions(t("navigation.addExpense"))}
             />
+
             <Stack.Screen
               name="ViewExpenses"
               component={ViewExpensesScreen}
-              options={{
-                headerShown: true,
-                title: "View Expenses",
-                headerBackTitleVisible: false,
-              }}
+              options={headerOptions(t("navigation.viewExpenses"))}
             />
+
             <Stack.Screen
               name="ImagePreview"
               component={ImagePreviewScreen}
-              options={{
-                headerShown: false,
-              }}
+              options={{ headerShown: false }}
             />
+
             <Stack.Screen
               name="Defaulters"
               component={DefaultersScreen}
-              options={{
-                headerShown: true,
-                title: "Defaulters",
-                headerBackTitleVisible: false,
-              }}
+              options={headerOptions(t("navigation.defaulters"))}
             />
+
             <Stack.Screen
               name="RecordPayment"
               component={RecordPaymentScreen}
-              options={{
-                headerShown: true,
-                title: "Record Payment",
-                headerBackTitleVisible: false,
-              }}
+              options={headerOptions(t("navigation.recordPayment"))}
             />
+
             <Stack.Screen
               name="PaymentHistory"
               component={PaymentHistoryScreen}
-              options={{
-                headerShown: true,
-                title: "Payment History",
-                headerBackTitleVisible: false,
-              }}
+              options={headerOptions(t("navigation.paymentHistory"))}
             />
+
             <Stack.Screen
               name="AdminUsers"
               component={AdminUsersScreen}
-              options={{
-                headerShown: true,
-                title: "Manage Users",
-                headerBackTitleVisible: false,
-              }}
+              options={headerOptions(t("navigation.manageUsers"))}
             />
+
             <Stack.Screen
               name="ScheduledPaymentRequests"
               component={ScheduledPaymentRequestsScreen}
-              options={{
-                headerShown: true,
-                title: "Scheduled Payments",
-                headerBackTitleVisible: false,
-              }}
+              options={headerOptions(t("navigation.scheduledPayments"))}
             />
+
             <Stack.Screen
               name="Notices"
               component={NoticesScreen}
-              options={{
-                headerShown: true,
-                title: "Notices",
-                headerBackTitleVisible: false,
-              }}
+              options={headerOptions(t("navigation.notices"))}
             />
+
             <Stack.Screen
               name="Notifications"
               component={NotificationsScreen}
-              options={{
-                headerShown: true,
-                title: "Notifications",
-                headerBackTitleVisible: false,
-              }}
+              options={headerOptions(t("navigation.notifications"))}
             />
+
             <Stack.Screen
               name="SOS"
               component={SOSScreen}
-              options={{
-              headerShown: true,
-              title: "SOS Emergency",
-              headerBackTitleVisible: false,
-              }}
+              options={headerOptions(t("navigation.sosEmergency"))}
             />
+
             <Stack.Screen
               name="Meetings"
               component={MeetingsScreen}
-              options={{
-                headerShown: true,
-                title: "Meetings",
-                headerBackTitleVisible: false,
-              }}
+              options={headerOptions(t("navigation.meetings"))}
             />
+
             <Stack.Screen
               name="Complaints"
               component={ComplaintsScreen}
-              options={{
-                headerShown: true,
-                title: "Complaints",
-                headerBackTitleVisible: false,
-              }}
+              options={headerOptions(t("navigation.complaints"))}
             />
           </>
         ) : (
           <>
-            <Stack.Screen
-              name="Login"
-              component={LoginScreen}
-            />
-
-            <Stack.Screen
-              name="Otp"
-              component={OtpScreen}
-            />
+            <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="Otp" component={OtpScreen} />
           </>
         )}
       </Stack.Navigator>

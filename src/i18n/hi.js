@@ -7,6 +7,7 @@ export default {
     loading: "लोड हो रहा है...",
     error: "त्रुटि",
     success: "सफलता",
+    back: "वापस",
   },
 
   login: {
@@ -532,5 +533,30 @@ export default {
     downloaded: "डाउनलोड हो गया",
     downloadedSuccess: "एक्सेल फ़ाइल सफलतापूर्वक डाउनलोड हो गई।",
     shareReport: "डिफॉल्टर रिपोर्ट साझा करें",
+  },
+  tabs: {
+    home: "होम",
+    payments: "भुगतान",
+    expenses: "खर्च",
+    profile: "प्रोफ़ाइल",
+  },
+  navigation: {
+    openingBalance: "ओपनिंग बैलेंस",
+    paymentRequest: "पेमेंट अनुरोध",
+    myDues: "मेरे बकाया",
+    submitPayment: "पेमेंट जमा करें",
+    submittedPayments: "जमा किए गए पेमेंट",
+    addExpense: "खर्च जोड़ें",
+    viewExpenses: "खर्च देखें",
+    defaulters: "बकायेदार",
+    recordPayment: "पेमेंट रिकॉर्ड करें",
+    paymentHistory: "पेमेंट इतिहास",
+    manageUsers: "यूज़र प्रबंधन",
+    scheduledPayments: "शेड्यूल पेमेंट",
+    notices: "नोटिस",
+    notifications: "नोटिफिकेशन",
+    sosEmergency: "SOS आपातकाल",
+    meetings: "मीटिंग्स",
+    complaints: "शिकायतें",
   },
 };
