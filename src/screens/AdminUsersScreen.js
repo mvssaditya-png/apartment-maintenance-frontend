@@ -320,7 +320,7 @@ export default function AdminUsersScreen() {
     <SafeAreaView style={styles.safeArea} edges={["bottom"]}>
       <View style={styles.container}>
         <View style={styles.headerRow}>
-          <View>
+          <View style={styles.headerTextBlock}>
             <Text style={styles.heading}>{t("adminUsers.title")}</Text>
             <Text style={styles.subtitle}>{t("adminUsers.subtitle")}</Text>
           </View>
@@ -669,11 +669,14 @@ const styles = StyleSheet.create({
   headerRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
+    alignItems: "flex-start",
     marginTop: 6,
     marginBottom: 18,
   },
-
+  headerTextBlock: {
+    flex: 1,
+    paddingRight: 12,
+  },
   heading: {
     fontSize: 28,
     fontWeight: "900",
@@ -685,7 +688,9 @@ const styles = StyleSheet.create({
     color: "#6B7280",
     fontWeight: "600",
     marginTop: 4,
+    lineHeight: 20,
   },
+
 
   addIconButton: {
     width: 52,
@@ -694,6 +699,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#2563EB",
     alignItems: "center",
     justifyContent: "center",
+    flexShrink: 0,
   },
 
   listContent: {

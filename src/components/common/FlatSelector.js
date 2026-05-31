@@ -85,14 +85,14 @@ export default function FlatSelector({ flats, selectedFlat, onSelectFlat }) {
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 20,
+    marginBottom: 16,
   },
 
   label: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: "900",
     color: "#111827",
-    marginBottom: 12,
+    marginBottom: 10,
   },
 
   searchBox: {
@@ -111,6 +111,7 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 10,
     fontSize: 15,
+    color: "#111827",
   },
 
   selectedBox: {
@@ -131,7 +132,7 @@ const styles = StyleSheet.create({
     padding: 10,
     borderWidth: 1,
     borderColor: "#E5E7EB",
-    maxHeight: 260,
+    maxHeight: 180,
   },
 
   flatRow: {

@@ -9,11 +9,13 @@ import {
   ActivityIndicator,
   Alert,
   RefreshControl,
+  Platform,
 } from "react-native";
 
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
+import DateTimePicker from "@react-native-community/datetimepicker";
 
 import {
   getLoggedInUser,
@@ -50,6 +52,9 @@ export default function MeetingsScreen() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [meetingDate, setMeetingDate] = useState("");
+  const [selectedMeetingDate, setSelectedMeetingDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
   const [location, setLocation] = useState("");
   const [active, setActive] = useState(true);
   const [status, setStatus] = useState("UPCOMING");
@@ -78,10 +83,7 @@ export default function MeetingsScreen() {
     } catch (error) {
       console.log("MEETINGS ERROR:", error?.response?.data || error);
 
-      Alert.alert(
-        t("common.error"),
-        t("meetings.loadFailed")
-      );
+      Alert.alert(t("common.error"), t("meetings.loadFailed"));
     } finally {
       setLoading(false);
     }
@@ -100,35 +102,108 @@ export default function MeetingsScreen() {
     setTitle("");
     setDescription("");
     setMeetingDate("");
+    setSelectedMeetingDate(new Date());
+    setShowDatePicker(false);
+    setShowTimePicker(false);
     setLocation("");
     setActive(true);
     setStatus("UPCOMING");
   };
 
   const startEdit = (item) => {
+    const formattedDate = formatInputDate(item.meetingDate);
+    const dateObject = formattedDate
+      ? new Date(toLocalDateTime(formattedDate))
+      : new Date();
+
     setEditingMeeting(item);
     setTitle(item.title || "");
     setDescription(item.description || "");
-    setMeetingDate(formatInputDate(item.meetingDate));
+    setMeetingDate(formattedDate);
+    setSelectedMeetingDate(
+      isNaN(dateObject.getTime()) ? new Date() : dateObject
+    );
     setLocation(item.location || "");
     setActive(Boolean(item.active));
     setStatus(item.status || "UPCOMING");
   };
 
+  const formatDateTimeForInput = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+
+    return `${year}-${month}-${day} ${hours}:${minutes}`;
+  };
+
+  const openDatePicker = () => {
+    const dateObject = meetingDate
+      ? new Date(toLocalDateTime(meetingDate))
+      : new Date();
+
+    setSelectedMeetingDate(
+      isNaN(dateObject.getTime()) ? new Date() : dateObject
+    );
+    setShowDatePicker(true);
+  };
+
+  const openTimePicker = () => {
+    const dateObject = meetingDate
+      ? new Date(toLocalDateTime(meetingDate))
+      : new Date();
+
+    setSelectedMeetingDate(
+      isNaN(dateObject.getTime()) ? new Date() : dateObject
+    );
+    setShowTimePicker(true);
+  };
+
+  const onMeetingDateChange = (event, selectedDate) => {
+    if (Platform.OS === "android") {
+      setShowDatePicker(false);
+    }
+
+    if (event?.type === "dismissed" || !selectedDate) {
+      return;
+    }
+
+    const updatedDate = new Date(selectedMeetingDate);
+    updatedDate.setFullYear(selectedDate.getFullYear());
+    updatedDate.setMonth(selectedDate.getMonth());
+    updatedDate.setDate(selectedDate.getDate());
+
+    setSelectedMeetingDate(updatedDate);
+    setMeetingDate(formatDateTimeForInput(updatedDate));
+  };
+
+  const onMeetingTimeChange = (event, selectedTime) => {
+    if (Platform.OS === "android") {
+      setShowTimePicker(false);
+    }
+
+    if (event?.type === "dismissed" || !selectedTime) {
+      return;
+    }
+
+    const updatedDate = new Date(selectedMeetingDate);
+    updatedDate.setHours(selectedTime.getHours());
+    updatedDate.setMinutes(selectedTime.getMinutes());
+    updatedDate.setSeconds(0);
+
+    setSelectedMeetingDate(updatedDate);
+    setMeetingDate(formatDateTimeForInput(updatedDate));
+  };
+
   const handleSave = async () => {
     if (!title.trim()) {
-      Alert.alert(
-        t("addExpense.validationError"),
-        t("meetings.enterTitle")
-      );
+      Alert.alert(t("addExpense.validationError"), t("meetings.enterTitle"));
       return;
     }
 
     if (!meetingDate.trim()) {
-      Alert.alert(
-        t("addExpense.validationError"),
-        t("meetings.enterDateTime")
-      );
+      Alert.alert(t("addExpense.validationError"), t("meetings.enterDateTime"));
       return;
     }
 
@@ -156,18 +231,10 @@ export default function MeetingsScreen() {
 
       if (editingMeeting) {
         await updateMeeting(editingMeeting.meetingId, payload);
-
-        Alert.alert(
-          t("common.success"),
-          t("meetings.updateSuccess")
-        );
+        Alert.alert(t("common.success"), t("meetings.updateSuccess"));
       } else {
         await createMeeting(payload);
-
-        Alert.alert(
-          t("common.success"),
-          t("meetings.createSuccess")
-        );
+        Alert.alert(t("common.success"), t("meetings.createSuccess"));
       }
 
       resetForm();
@@ -175,10 +242,7 @@ export default function MeetingsScreen() {
     } catch (error) {
       console.log("SAVE MEETING ERROR:", error?.response?.data || error);
 
-      Alert.alert(
-        t("common.error"),
-        t("meetings.saveFailed")
-      );
+      Alert.alert(t("common.error"), t("meetings.saveFailed"));
     } finally {
       setSaving(false);
     }
@@ -191,10 +255,7 @@ export default function MeetingsScreen() {
     } catch (error) {
       console.log("TOGGLE MEETING ERROR:", error?.response?.data || error);
 
-      Alert.alert(
-        t("common.error"),
-        t("meetings.updateStatusFailed")
-      );
+      Alert.alert(t("common.error"), t("meetings.updateStatusFailed"));
     }
   };
 
@@ -261,12 +322,72 @@ export default function MeetingsScreen() {
               multiline
             />
 
-            <AppInput
-              label={t("meetings.meetingDateTime")}
-              placeholder="YYYY-MM-DD HH:mm"
-              value={meetingDate}
-              onChangeText={setMeetingDate}
-            />
+            <Text style={styles.label}>
+              {t("meetings.meetingDateTime")}
+            </Text>
+
+            <View style={styles.dateTimeRow}>
+              <TouchableOpacity
+                style={styles.dateTimeButton}
+                onPress={openDatePicker}
+                activeOpacity={0.85}
+              >
+                <Text
+                  style={[
+                    styles.dateTimeText,
+                    !meetingDate && styles.placeholderText,
+                  ]}
+                >
+                  {meetingDate ? meetingDate.substring(0, 10) : "Select Date"}
+                </Text>
+
+                <Ionicons
+                  name="calendar-outline"
+                  size={21}
+                  color={COLORS.primary}
+                />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.dateTimeButton}
+                onPress={openTimePicker}
+                activeOpacity={0.85}
+              >
+                <Text
+                  style={[
+                    styles.dateTimeText,
+                    !meetingDate && styles.placeholderText,
+                  ]}
+                >
+                  {meetingDate ? meetingDate.substring(11, 16) : "Select Time"}
+                </Text>
+
+                <Ionicons
+                  name="time-outline"
+                  size={21}
+                  color={COLORS.primary}
+                />
+              </TouchableOpacity>
+            </View>
+
+            {showDatePicker && (
+              <DateTimePicker
+                value={selectedMeetingDate}
+                mode="date"
+                display={Platform.OS === "ios" ? "spinner" : "default"}
+                minimumDate={new Date()}
+                onChange={onMeetingDateChange}
+              />
+            )}
+
+            {showTimePicker && (
+              <DateTimePicker
+                value={selectedMeetingDate}
+                mode="time"
+                display={Platform.OS === "ios" ? "spinner" : "default"}
+                onChange={onMeetingTimeChange}
+              />
+            )}
 
             <AppInput
               label={t("meetings.location")}
@@ -574,6 +695,34 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     color: COLORS.textSecondary,
     marginBottom: 10,
+  },
+
+  dateTimeRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 16,
+  },
+
+  dateTimeButton: {
+    width: "48%",
+    borderWidth: 1,
+    borderColor: "#D1D5DB",
+    borderRadius: 14,
+    backgroundColor: "#F9FAFB",
+    padding: 14,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+
+  dateTimeText: {
+    fontSize: 15,
+    color: COLORS.text,
+    fontWeight: "800",
+  },
+
+  placeholderText: {
+    color: "#9CA3AF",
   },
 
   statusGrid: {

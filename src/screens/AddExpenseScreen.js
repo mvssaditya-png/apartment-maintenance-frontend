@@ -8,11 +8,13 @@ import {
   ActivityIndicator,
   Alert,
   ScrollView,
+  Platform,
 } from "react-native";
 
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
+import DateTimePicker from "@react-native-community/datetimepicker";
 
 import ImagePreviewModal from "../components/common/ImagePreviewModal";
 
@@ -46,11 +48,45 @@ export default function AddExpenseScreen({ navigation }) {
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
   const [expenseDate, setExpenseDate] = useState("");
+  const [selectedExpenseDate, setSelectedExpenseDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [category, setCategory] = useState("MAINTENANCE");
 
   const [selectedImage, setSelectedImage] = useState(null);
   const [loading, setLoading] = useState(false);
   const [previewImageUrl, setPreviewImageUrl] = useState(null);
+
+  const formatDateForApi = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+  };
+
+  const onExpenseDateChange = (event, selectedDate) => {
+    if (Platform.OS === "android") {
+      setShowDatePicker(false);
+    }
+
+    if (event?.type === "dismissed") {
+      return;
+    }
+
+    if (!selectedDate) {
+      return;
+    }
+
+    setSelectedExpenseDate(selectedDate);
+    setExpenseDate(formatDateForApi(selectedDate));
+  };
+
+  const openDatePicker = () => {
+    setSelectedExpenseDate(
+      expenseDate ? new Date(expenseDate) : new Date()
+    );
+    setShowDatePicker(true);
+  };
 
   const pickImage = async () => {
     const permission =
@@ -195,12 +231,40 @@ export default function AddExpenseScreen({ navigation }) {
             }
           />
 
-          <AppInput
-            label={t("addExpense.expenseDate")}
-            placeholder="YYYY-MM-DD"
-            value={expenseDate}
-            onChangeText={setExpenseDate}
-          />
+          <Text style={styles.label}>
+            {t("addExpense.expenseDate")}
+          </Text>
+
+          <TouchableOpacity
+            style={styles.datePickerButton}
+            onPress={openDatePicker}
+            activeOpacity={0.85}
+          >
+            <Text
+              style={[
+                styles.datePickerText,
+                !expenseDate && styles.placeholderText,
+              ]}
+            >
+              {expenseDate || "Select Expense Date"}
+            </Text>
+
+            <Ionicons
+              name="calendar-outline"
+              size={22}
+              color={COLORS.primary}
+            />
+          </TouchableOpacity>
+
+          {showDatePicker && (
+            <DateTimePicker
+              value={selectedExpenseDate}
+              mode="date"
+              display={Platform.OS === "ios" ? "spinner" : "default"}
+              maximumDate={new Date()}
+              onChange={onExpenseDateChange}
+            />
+          )}
 
           <Text style={styles.label}>
             {t("addExpense.category")}
@@ -367,6 +431,28 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     color: COLORS.textSecondary,
     marginBottom: 10,
+  },
+
+  datePickerButton: {
+    borderWidth: 1,
+    borderColor: "#D1D5DB",
+    borderRadius: 14,
+    backgroundColor: "#F9FAFB",
+    padding: 14,
+    marginBottom: 16,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+
+  datePickerText: {
+    fontSize: 16,
+    color: COLORS.text,
+    fontWeight: "700",
+  },
+
+  placeholderText: {
+    color: "#9CA3AF",
   },
 
   categoryGrid: {

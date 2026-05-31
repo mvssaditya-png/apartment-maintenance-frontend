@@ -12,13 +12,12 @@ import {
   Platform,
   ScrollView,
 } from "react-native";
-
+import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
-
 import { createPaymentRequest } from "../api/dashboardApi";
 import { t } from "../i18n";
 import { LanguageContext } from "../context/LanguageContext";
-
+import DateTimePicker from "@react-native-community/datetimepicker";
 const REQUEST_TYPES = [
   {
     labelKey: "paymentRequest.maintenance",
@@ -50,8 +49,8 @@ export default function PaymentRequestScreen({ navigation }) {
 
   const currentDate = new Date();
 
-  const [title, setTitle] = useState("Monthly Maintenance");
-  const [description, setDescription] = useState("Monthly maintenance payment");
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
   const [requestType, setRequestType] = useState("Maintenance");
   const [paymentMonth, setPaymentMonth] = useState(currentDate.getMonth() + 1);
@@ -59,8 +58,31 @@ export default function PaymentRequestScreen({ navigation }) {
     String(currentDate.getFullYear())
   );
   const [dueDate, setDueDate] = useState("");
+  const [selectedDueDate, setSelectedDueDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [loading, setLoading] = useState(false);
+  const formatDateForApi = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+  const onDueDateChange = (event, selectedDate) => {
+    if (Platform.OS === "android") {
+      setShowDatePicker(false);
+    }
 
+    if (event?.type === "dismissed") {
+      return;
+    }
+
+    if (!selectedDate) {
+      return;
+    }
+
+    setSelectedDueDate(selectedDate);
+    setDueDate(formatDateForApi(selectedDate));
+  };
   const handleCreateRequest = async () => {
     if (!title.trim()) {
       Alert.alert(
@@ -249,13 +271,37 @@ export default function PaymentRequestScreen({ navigation }) {
 
             <FieldLabel label={t("paymentRequest.dueDate")} />
 
-            <TextInput
-              style={styles.input}
-              placeholder="YYYY-MM-DD"
-              value={dueDate}
-              onChangeText={setDueDate}
-            />
+            <TouchableOpacity
+              style={styles.datePickerButton}
+              onPress={() => {
+                setSelectedDueDate(dueDate ? new Date(dueDate) : new Date());
+                setShowDatePicker(true);
+              }}
+            >
+              <Text
+                style={[
+                  styles.datePickerText,
+                  !dueDate && styles.placeholderText,
+                ]}
+              >
+                {dueDate || "Select Due Date"}
+              </Text>
 
+              <Ionicons
+                name="calendar-outline"
+                size={22}
+                color="#2563EB"
+              />
+            </TouchableOpacity>
+            {showDatePicker && (
+              <DateTimePicker
+                value={selectedDueDate}
+                mode="date"
+                display={Platform.OS === "ios" ? "spinner" : "default"}
+                minimumDate={new Date()}
+                onChange={onDueDateChange}
+              />
+            )}
             <TouchableOpacity
               style={styles.button}
               onPress={handleCreateRequest}
@@ -421,5 +467,25 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "800",
+  },
+  datePickerButton: {
+    borderWidth: 1,
+    borderColor: "#D1D5DB",
+    borderRadius: 14,
+    backgroundColor: "#F9FAFB",
+    padding: 14,
+    marginBottom: 16,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+
+  datePickerText: {
+    fontSize: 16,
+    color: "#111827",
+  },
+
+  placeholderText: {
+    color: "#9CA3AF",
   },
 });
