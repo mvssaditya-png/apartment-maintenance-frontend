@@ -23,7 +23,9 @@ export default function CreateSiteScreen({ navigation }) {
   const [maintenanceAmount, setMaintenanceAmount] = useState("");
   const [openingBalance, setOpeningBalance] = useState("");
   const [totalFlats, setTotalFlats] = useState("");
-
+  const [address, setAddress] = useState("");
+  const [city, setCity] = useState("");
+  const [state, setState] = useState("");
   const [adminName, setAdminName] = useState("");
   const [adminPhoneNumber, setAdminPhoneNumber] = useState("");
   const [adminEmail, setAdminEmail] = useState("");
