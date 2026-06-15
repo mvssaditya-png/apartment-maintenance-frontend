@@ -41,10 +41,15 @@ export default function OtpScreen({ route, navigation }) {
       const response = await verifyOtp(phoneNumber, otp);
 
       const token = response.data.token;
+      const role = response.data.role;
 
       await AsyncStorage.setItem("token", token);
 
-      login(token);
+      if (role) {
+        await AsyncStorage.setItem("role", role);
+      }
+
+      login(token, role);
     } catch (error) {
       console.log("VERIFY OTP ERROR:", error?.response?.data);
 
