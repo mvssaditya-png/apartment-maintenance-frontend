@@ -16,25 +16,58 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 
-import { createSite } from "../api/superAdminApi";
+import {
+  createSite,
+  updateSite,
+} from "../api/superAdminApi";
 
-export default function CreateSiteScreen({ navigation }) {
-  const [siteName, setSiteName] = useState("");
-  const [maintenanceAmount, setMaintenanceAmount] = useState("");
-  const [openingBalance, setOpeningBalance] = useState("");
-  const [totalFlats, setTotalFlats] = useState("");
-  const [address, setAddress] = useState("");
-  const [city, setCity] = useState("");
-  const [state, setState] = useState("");
-  const [adminName, setAdminName] = useState("");
-  const [adminPhoneNumber, setAdminPhoneNumber] = useState("");
-  const [adminEmail, setAdminEmail] = useState("");
+export default function CreateSiteScreen({ route, navigation }) {
+  const editingSite = route.params?.site || null;
+  const isEditMode = !!editingSite;
+
+  const [siteName, setSiteName] = useState(editingSite?.siteName || "");
+  const [address, setAddress] = useState(editingSite?.address || "");
+  const [city, setCity] = useState(editingSite?.city || "");
+  const [state, setState] = useState(editingSite?.state || "");
+
+  const [maintenanceAmount, setMaintenanceAmount] = useState(
+    editingSite?.maintenanceAmount ? String(editingSite.maintenanceAmount) : ""
+  );
+
+  const [openingBalance, setOpeningBalance] = useState(
+    editingSite?.openingBalance ? String(editingSite.openingBalance) : ""
+  );
+
+  const [totalFlats, setTotalFlats] = useState(
+    editingSite?.totalFlats ? String(editingSite.totalFlats) : ""
+  );
+
+  const [adminName, setAdminName] = useState(editingSite?.adminName || "");
+  const [adminPhoneNumber, setAdminPhoneNumber] = useState(
+    editingSite?.adminPhone || editingSite?.adminPhoneNumber || ""
+  );
+  const [adminEmail, setAdminEmail] = useState(editingSite?.adminEmail || "");
 
   const [loading, setLoading] = useState(false);
 
-  const handleCreate = async () => {
+  const handleSave = async () => {
     if (!siteName.trim()) {
       Alert.alert("Validation", "Please enter apartment name.");
+      return;
+    }
+
+    if (!address.trim()) {
+      Alert.alert("Validation", "Please enter apartment address.");
+      return;
+    }
+
+    if (!city.trim()) {
+      Alert.alert("Validation", "Please enter city.");
+      return;
+    }
+
+    if (!state.trim()) {
+      Alert.alert("Validation", "Please enter state.");
       return;
     }
 
@@ -60,38 +93,49 @@ export default function CreateSiteScreen({ navigation }) {
 
     const payload = {
       siteName: siteName.trim(),
+      address: address.trim(),
+      city: city.trim(),
+      state: state.trim(),
       maintenanceAmount: Number(maintenanceAmount),
       openingBalance: openingBalance ? Number(openingBalance) : 0,
       totalFlats: Number(totalFlats),
       adminName: adminName.trim(),
       adminPhoneNumber: adminPhoneNumber.trim(),
       adminEmail: adminEmail.trim(),
-      address: address.trim(),
-      city: city.trim(),
-      state: state.trim(),
     };
 
     try {
       setLoading(true);
 
-      await createSite(payload);
+      if (isEditMode) {
+        await updateSite(editingSite.siteId, payload);
 
-      Alert.alert(
-        "Success",
-        "Apartment created successfully with 3 months free trial.",
-        [
+        Alert.alert("Success", "Apartment updated successfully.", [
           {
             text: "OK",
             onPress: () => navigation.goBack(),
           },
-        ]
-      );
+        ]);
+      } else {
+        await createSite(payload);
+
+        Alert.alert(
+          "Success",
+          "Apartment created successfully with 3 months free trial.",
+          [
+            {
+              text: "OK",
+              onPress: () => navigation.goBack(),
+            },
+          ]
+        );
+      }
     } catch (error) {
-      console.log("CREATE SITE ERROR:", error?.response?.data || error);
+      console.log("SAVE SITE ERROR:", error?.response?.data || error);
 
       Alert.alert(
         "Error",
-        error?.response?.data?.message || "Unable to create apartment."
+        error?.response?.data?.message || "Unable to save apartment."
       );
     } finally {
       setLoading(false);
@@ -102,7 +146,8 @@ export default function CreateSiteScreen({ navigation }) {
     <SafeAreaView style={styles.safeArea} edges={["bottom"]}>
       <KeyboardAvoidingView
         style={styles.keyboardView}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={100}
       >
         <ScrollView
           contentContainerStyle={styles.container}
@@ -114,11 +159,14 @@ export default function CreateSiteScreen({ navigation }) {
               <Ionicons name="business-outline" size={34} color="#FFFFFF" />
             </View>
 
-            <Text style={styles.title}>Create Apartment</Text>
+            <Text style={styles.title}>
+              {isEditMode ? "Edit Apartment" : "Create Apartment"}
+            </Text>
 
             <Text style={styles.subtitle}>
-              Add a new apartment site and create the first admin user.
-              Free trial will be activated for 3 months.
+              {isEditMode
+                ? "Update apartment details and admin information."
+                : "Add a new apartment site and create the first admin user. Free trial will be activated for 3 months."}
             </Text>
           </View>
 
@@ -133,24 +181,24 @@ export default function CreateSiteScreen({ navigation }) {
             />
 
             <Field
-            label="Address"
-            placeholder="Apartment full address"
-            value={address}
-            onChangeText={setAddress}
+              label="Address"
+              placeholder="Apartment full address"
+              value={address}
+              onChangeText={setAddress}
             />
 
             <Field
-            label="City"
-            placeholder="Example: Visakhapatnam"
-            value={city}
-            onChangeText={setCity}
+              label="City"
+              placeholder="Example: Visakhapatnam"
+              value={city}
+              onChangeText={setCity}
             />
 
             <Field
-            label="State"
-            placeholder="Example: Andhra Pradesh"
-            value={state}
-            onChangeText={setState}
+              label="State"
+              placeholder="Example: Andhra Pradesh"
+              value={state}
+              onChangeText={setState}
             />
 
             <Field
@@ -214,20 +262,22 @@ export default function CreateSiteScreen({ navigation }) {
               onChangeText={setAdminEmail}
             />
 
-            <View style={styles.trialBox}>
-              <Ionicons name="gift-outline" size={23} color="#2563EB" />
+            {!isEditMode && (
+              <View style={styles.trialBox}>
+                <Ionicons name="gift-outline" size={23} color="#2563EB" />
 
-              <View style={{ flex: 1 }}>
-                <Text style={styles.trialTitle}>3 Months Free Trial</Text>
-                <Text style={styles.trialText}>
-                  The apartment will be active immediately after creation.
-                </Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.trialTitle}>3 Months Free Trial</Text>
+                  <Text style={styles.trialText}>
+                    The apartment will be active immediately after creation.
+                  </Text>
+                </View>
               </View>
-            </View>
+            )}
 
             <TouchableOpacity
               style={styles.createButton}
-              onPress={handleCreate}
+              onPress={handleSave}
               disabled={loading}
               activeOpacity={0.85}
             >
@@ -235,7 +285,9 @@ export default function CreateSiteScreen({ navigation }) {
                 <ActivityIndicator color="#FFFFFF" />
               ) : (
                 <>
-                  <Text style={styles.createButtonText}>Create Apartment</Text>
+                  <Text style={styles.createButtonText}>
+                    {isEditMode ? "Update Apartment" : "Create Apartment"}
+                  </Text>
                   <Ionicons
                     name="checkmark-circle-outline"
                     size={21}

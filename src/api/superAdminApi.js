@@ -20,3 +20,9 @@ export const updateSubscriptionPlan = (planId, payload) =>
 
 export const toggleSubscriptionPlan = (planId) =>
   API.patch(`/super-admin/subscription-plans/${planId}/toggle`);
+
+export const updateSite = (siteId, payload) =>
+  API.put(`/super-admin/sites/${siteId}`, payload);
+
+export const toggleSite = (siteId) =>
+  API.patch(`/super-admin/sites/${siteId}/toggle`);

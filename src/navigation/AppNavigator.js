@@ -30,6 +30,8 @@ import SuperAdminDashboardScreen from "../screens/SuperAdminDashboardScreen";
 import CreateSiteScreen from "../screens/CreateSiteScreen";
 import { AuthContext } from "../context/AuthContext";
 import { LanguageContext } from "../context/LanguageContext";
+import SubscriptionPlansScreen from "../screens/SubscriptionPlansScreen";
+import CreatePlanScreen from "../screens/CreatePlanScreen";
 import { t } from "../i18n";
 
 const Stack = createNativeStackNavigator();
@@ -69,6 +71,16 @@ export default function AppNavigator() {
                 name="CreateSite"
                 component={CreateSiteScreen}
                 options={headerOptions("Create Apartment")}
+              />
+              <Stack.Screen
+                name="SubscriptionPlans"
+                component={SubscriptionPlansScreen}
+                options={headerOptions("Subscription Plans")}
+              />
+              <Stack.Screen
+                name="CreatePlan"
+                component={CreatePlanScreen}
+                options={headerOptions("Plan Details")}
               />
             </>
           ) : (

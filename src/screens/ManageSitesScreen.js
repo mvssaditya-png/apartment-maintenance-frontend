@@ -9,13 +9,17 @@ import {
   ActivityIndicator,
   RefreshControl,
   TextInput,
+  Alert,
 } from "react-native";
 
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 
-import { getSites } from "../api/superAdminApi";
+import {
+  getSites,
+  toggleSite,
+} from "../api/superAdminApi";
 
 export default function ManageSitesScreen({ navigation }) {
   const [sites, setSites] = useState([]);
@@ -46,6 +50,34 @@ export default function ManageSitesScreen({ navigation }) {
     setRefreshing(false);
   };
 
+  const handleToggle = async (siteId, active) => {
+    Alert.alert(
+      active ? "Deactivate Apartment" : "Activate Apartment",
+      active
+        ? "Are you sure you want to deactivate this apartment?"
+        : "Are you sure you want to activate this apartment?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: active ? "Deactivate" : "Activate",
+          style: active ? "destructive" : "default",
+          onPress: async () => {
+            try {
+              await toggleSite(siteId);
+              await loadSites();
+            } catch (error) {
+              console.log("TOGGLE SITE ERROR:", error?.response?.data || error);
+              Alert.alert("Error", "Unable to update apartment status.");
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const filteredSites = useMemo(() => {
     const q = search.toLowerCase().trim();
 
@@ -55,7 +87,9 @@ export default function ManageSitesScreen({ navigation }) {
       return (
         String(item.siteName || "").toLowerCase().includes(q) ||
         String(item.adminName || "").toLowerCase().includes(q) ||
-        String(item.adminPhone || "").toLowerCase().includes(q)
+        String(item.adminPhone || "").toLowerCase().includes(q) ||
+        String(item.city || "").toLowerCase().includes(q) ||
+        String(item.state || "").toLowerCase().includes(q)
       );
     });
   }, [search, sites]);
@@ -74,7 +108,7 @@ export default function ManageSitesScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.safeArea} edges={["bottom"]}>
       <View style={styles.header}>
-        <View>
+        <View style={styles.headerTextBlock}>
           <Text style={styles.title}>Manage Apartments</Text>
           <Text style={styles.subtitle}>
             View and manage all registered apartment sites.
@@ -122,7 +156,12 @@ export default function ManageSitesScreen({ navigation }) {
           </View>
         ) : (
           filteredSites.map((item) => (
-            <SiteCard key={item.siteId} item={item} />
+            <SiteCard
+              key={item.siteId}
+              item={item}
+              navigation={navigation}
+              onToggle={handleToggle}
+            />
           ))
         )}
       </ScrollView>
@@ -130,7 +169,7 @@ export default function ManageSitesScreen({ navigation }) {
   );
 }
 
-function SiteCard({ item }) {
+function SiteCard({ item, navigation, onToggle }) {
   const statusColor = getStatusColor(item.subscriptionStatus);
 
   return (
@@ -146,6 +185,12 @@ function SiteCard({ item }) {
           <Text style={styles.flatText}>
             {item.totalFlats || 0} flats
           </Text>
+
+          {(item.city || item.state) && (
+            <Text style={styles.locationText}>
+              {[item.city, item.state].filter(Boolean).join(", ")}
+            </Text>
+          )}
         </View>
 
         <View style={[styles.statusBadge, { backgroundColor: statusColor.bg }]}>
@@ -157,29 +202,11 @@ function SiteCard({ item }) {
 
       <View style={styles.divider} />
 
-      <InfoRow
-        icon="person-outline"
-        label="Admin"
-        value={item.adminName || "-"}
-      />
-
-      <InfoRow
-        icon="call-outline"
-        label="Phone"
-        value={item.adminPhone || "-"}
-      />
-
-      <InfoRow
-        icon="calendar-outline"
-        label="Trial Ends"
-        value={formatDate(item.trialEndDate)}
-      />
-
-      <InfoRow
-        icon="card-outline"
-        label="Subscription Ends"
-        value={formatDate(item.subscriptionEndDate)}
-      />
+      <InfoRow icon="person-outline" label="Admin" value={item.adminName || "-"} />
+      <InfoRow icon="call-outline" label="Phone" value={item.adminPhone || "-"} />
+      <InfoRow icon="mail-outline" label="Email" value={item.adminEmail || "-"} />
+      <InfoRow icon="calendar-outline" label="Trial Ends" value={formatDate(item.trialEndDate)} />
+      <InfoRow icon="card-outline" label="Subscription Ends" value={formatDate(item.subscriptionEndDate)} />
 
       <View
         style={[
@@ -195,6 +222,36 @@ function SiteCard({ item }) {
         >
           {item.active ? "Active Apartment" : "Inactive Apartment"}
         </Text>
+      </View>
+
+      <View style={styles.buttonRow}>
+        <TouchableOpacity
+          style={styles.editButton}
+          onPress={() => navigation.navigate("CreateSite", { site: item })}
+          activeOpacity={0.85}
+        >
+          <Ionicons name="create-outline" size={18} color="#2563EB" />
+          <Text style={styles.editText}>Edit</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.statusButton,
+            item.active ? styles.deactivateButton : styles.activateButton,
+          ]}
+          onPress={() => onToggle(item.siteId, item.active)}
+          activeOpacity={0.85}
+        >
+          <Ionicons
+            name={item.active ? "close-circle-outline" : "checkmark-circle-outline"}
+            size={18}
+            color="#FFFFFF"
+          />
+
+          <Text style={styles.statusButtonText}>
+            {item.active ? "Deactivate" : "Activate"}
+          </Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -254,6 +311,11 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
 
+  headerTextBlock: {
+    flex: 1,
+    paddingRight: 12,
+  },
+
   title: {
     fontSize: 28,
     fontWeight: "900",
@@ -266,7 +328,6 @@ const styles = StyleSheet.create({
     marginTop: 5,
     lineHeight: 20,
     fontWeight: "600",
-    maxWidth: 270,
   },
 
   addButton: {
@@ -276,7 +337,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#2563EB",
     alignItems: "center",
     justifyContent: "center",
-    marginLeft: 12,
+    flexShrink: 0,
   },
 
   searchBox: {
@@ -385,6 +446,13 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
 
+  locationText: {
+    fontSize: 12,
+    color: "#9CA3AF",
+    fontWeight: "700",
+    marginTop: 3,
+  },
+
   statusBadge: {
     borderRadius: 14,
     paddingHorizontal: 10,
@@ -451,5 +519,46 @@ const styles = StyleSheet.create({
 
   activeTextOff: {
     color: "#6B7280",
+  },
+
+  buttonRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 16,
+    alignItems: "center",
+  },
+
+  editButton: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  editText: {
+    marginLeft: 5,
+    fontSize: 15,
+    fontWeight: "800",
+    color: "#2563EB",
+  },
+
+  statusButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 12,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  activateButton: {
+    backgroundColor: "#16A34A",
+  },
+
+  deactivateButton: {
+    backgroundColor: "#DC2626",
+  },
+
+  statusButtonText: {
+    color: "#FFFFFF",
+    fontWeight: "800",
+    marginLeft: 6,
   },
 });
