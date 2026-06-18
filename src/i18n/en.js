@@ -77,6 +77,7 @@ export default {
     openingBalance: "Opening\nBalance",
     paymentRequest: "Payment\nRequest",
     manageUsers: "Manage\nUsers",
+    subscription: "Subscription",
     },
     overview: "Overview",
     thisMonth: "This Month",
@@ -559,4 +560,25 @@ export default {
     meetings: "Meetings",
     complaints: "Complaints",
   },
+  subscription: {
+    title: "Subscription",
+    availablePlans: "Available Plans",
+    daysRemaining: "Days Remaining",
+    trialEnd: "Trial End",
+    subscriptionEnd: "Subscription End",
+    noPlans: "No plans available",
+    subscribe: "Subscribe",
+    creating: "Creating...",
+    orderCreated: "Order Created",
+    orderCreatedMessage:
+      "Razorpay order created successfully. Since you are using Expo Go, use Test Activate to complete testing.",
+    testActivate: "Test Activate Subscription",
+    testNote:
+      "This button is only for Expo Go testing. Real Razorpay checkout will be added in development/native build.",
+    activateSuccess: "Subscription activated successfully.",
+    activateError: "Unable to activate subscription.",
+    createOrderError: "Unable to create subscription order.",
+    viewRenew: "View / Renew Subscription",
+    status: "Status",
+  }
 };

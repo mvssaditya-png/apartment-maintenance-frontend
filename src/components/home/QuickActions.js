@@ -31,6 +31,7 @@ export default function QuickActions({ role, navigation }) {
       sos: "SOS",
       meetings: "Meetings",
       complaints: "Complaints",
+      subscription: "Subscription",
     };
 
     if (routes[key]) {
@@ -174,6 +175,13 @@ function getActionsByRole(role) {
       icon: "people-circle-outline",
       color: COLORS.primary,
       bg: "#EEF5FF",
+    },
+    {
+      key: "subscription",
+      labelKey: "home.actions.subscription",
+      icon: "card-outline",
+      color: COLORS.success,
+      bg: "#EAFBF0",
     },
   ];
 

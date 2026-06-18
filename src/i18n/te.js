@@ -77,6 +77,7 @@ export default {
     openingBalance: "ప్రారంభ\nబ్యాలెన్స్",
     paymentRequest: "చెల్లింపు\nఅభ్యర్థన",
     manageUsers: "యూజర్లను\nనిర్వహించండి",
+    subscription: "సబ్‌స్క్రిప్షన్",
     },
     overview: "అవలోకనం",
     thisMonth: "ఈ నెల",
@@ -559,4 +560,25 @@ export default {
     meetings: "సమావేశాలు",
     complaints: "ఫిర్యాదులు",
   },
+  subscription: {
+    title: "సబ్‌స్క్రిప్షన్",
+    availablePlans: "అందుబాటులో ఉన్న ప్లాన్లు",
+    daysRemaining: "మిగిలిన రోజులు",
+    trialEnd: "ట్రయల్ ముగింపు",
+    subscriptionEnd: "సబ్‌స్క్రిప్షన్ ముగింపు",
+    noPlans: "ప్లాన్లు అందుబాటులో లేవు",
+    subscribe: "సబ్‌స్క్రైబ్ చేయండి",
+    creating: "సృష్టిస్తోంది...",
+    orderCreated: "ఆర్డర్ సృష్టించబడింది",
+    orderCreatedMessage:
+      "Razorpay ఆర్డర్ సృష్టించబడింది. మీరు Expo Go ఉపయోగిస్తున్నందున, పరీక్ష కోసం Test Activate ఉపయోగించండి.",
+    testActivate: "టెస్ట్ సబ్‌స్క్రిప్షన్ యాక్టివేట్ చేయండి",
+    testNote:
+      "ఈ బటన్ Expo Go పరీక్ష కోసం మాత్రమే. నిజమైన Razorpay checkout development/native build లో జోడిస్తాము.",
+    activateSuccess: "సబ్‌స్క్రిప్షన్ విజయవంతంగా యాక్టివేట్ అయింది.",
+    activateError: "సబ్‌స్క్రిప్షన్ యాక్టివేట్ చేయలేకపోయాము.",
+    createOrderError: "సబ్‌స్క్రిప్షన్ ఆర్డర్ సృష్టించలేకపోయాము.",
+    viewRenew: "సబ్‌స్క్రిప్షన్ చూడండి / రిన్యూ చేయండి",
+    status: "స్థితి",
+  }
 };

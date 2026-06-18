@@ -77,6 +77,7 @@ export default {
     openingBalance: "ओपनिंग\nबैलेंस",
     paymentRequest: "पेमेंट\nरिक्वेस्ट",
     manageUsers: "यूज़र\nमैनेज करें",
+    subscription: "सब्सक्रिप्शन",
     },
     overview: "ओवरव्यू",
     thisMonth: "इस महीने",
@@ -559,4 +560,25 @@ export default {
     meetings: "मीटिंग्स",
     complaints: "शिकायतें",
   },
+  subscription: {
+    title: "सब्सक्रिप्शन",
+    availablePlans: "उपलब्ध प्लान",
+    daysRemaining: "शेष दिन",
+    trialEnd: "ट्रायल समाप्ति",
+    subscriptionEnd: "सब्सक्रिप्शन समाप्ति",
+    noPlans: "कोई प्लान उपलब्ध नहीं है",
+    subscribe: "सब्सक्राइब करें",
+    creating: "बना रहा है...",
+    orderCreated: "ऑर्डर बनाया गया",
+    orderCreatedMessage:
+      "Razorpay ऑर्डर सफलतापूर्वक बनाया गया। आप Expo Go उपयोग कर रहे हैं, इसलिए टेस्टिंग के लिए Test Activate इस्तेमाल करें।",
+    testActivate: "टेस्ट सब्सक्रिप्शन एक्टिवेट करें",
+    testNote:
+      "यह बटन केवल Expo Go टेस्टिंग के लिए है। असली Razorpay checkout development/native build में जोड़ा जाएगा।",
+    activateSuccess: "सब्सक्रिप्शन सफलतापूर्वक एक्टिवेट हो गया।",
+    activateError: "सब्सक्रिप्शन एक्टिवेट नहीं हो पाया।",
+    createOrderError: "सब्सक्रिप्शन ऑर्डर नहीं बन पाया।",
+    viewRenew: "सब्सक्रिप्शन देखें / रिन्यू करें",
+    status: "स्थिति",
+  }
 };

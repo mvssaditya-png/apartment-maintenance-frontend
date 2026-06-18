@@ -32,18 +32,29 @@ import { AuthContext } from "../context/AuthContext";
 import { LanguageContext } from "../context/LanguageContext";
 import SubscriptionPlansScreen from "../screens/SubscriptionPlansScreen";
 import CreatePlanScreen from "../screens/CreatePlanScreen";
+import SubscriptionScreen  from "../screens/SubscriptionScreen";
+import SubscriptionExpiredScreen from "../screens/SubscriptionExpiredScreen";
+
 import { t } from "../i18n";
 
 const Stack = createNativeStackNavigator();
 
 export default function AppNavigator() {
-  const { userToken, userRole, isLoading } = useContext(AuthContext);
+  const {
+  userToken,
+  userRole,
+  subscriptionStatus,
+  isLoading,
+  } = useContext(AuthContext);
   const { language } = useContext(LanguageContext);
 
   if (isLoading) {
     return <SplashScreen />;
   }
-
+  const isSubscriptionExpired =
+  userToken &&
+  userRole !== "SUPER_ADMIN" &&
+  subscriptionStatus?.expired === true;
   const headerOptions = (title) => ({
     headerShown: true,
     title,
@@ -55,8 +66,22 @@ export default function AppNavigator() {
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
-        {userToken ? (
-          userRole === "SUPER_ADMIN" ? (
+       {userToken ? (
+            isSubscriptionExpired ? (
+              <>
+                <Stack.Screen
+                  name="SubscriptionExpired"
+                  component={SubscriptionExpiredScreen}
+                  options={{ headerShown: false }}
+                />
+
+                <Stack.Screen
+                  name="Subscription"
+                  component={SubscriptionScreen}
+                  options={headerOptions("Subscription")}
+                />
+              </>
+            ) : userRole === "SUPER_ADMIN" ? (
             <>
               <Stack.Screen
                 name="SuperAdminDashboard"
@@ -193,6 +218,12 @@ export default function AppNavigator() {
                 name="Complaints"
                 component={ComplaintsScreen}
                 options={headerOptions(t("navigation.complaints"))}
+              />
+
+              <Stack.Screen
+                name="Subscription"
+                component={SubscriptionScreen}
+                options={headerOptions("Subscription")}
               />
             </>
           )

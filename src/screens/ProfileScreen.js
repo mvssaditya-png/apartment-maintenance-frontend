@@ -24,9 +24,8 @@ import {
   t
 } from "../i18n";
 
-export default function ProfileScreen() {
-  const { logout } = useContext(AuthContext);
-
+export default function ProfileScreen({ navigation }) {
+  const { logout, subscriptionStatus } = useContext(AuthContext);
   const [user, setUser] = useState(null);
   const [site, setSite] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -217,6 +216,48 @@ export default function ProfileScreen() {
             value={String(site?.totalFlats ?? "-")}
             hideBorder
           />
+        </AppCard>
+
+        <Text style={styles.sectionTitle}>{t("subscription.title")}</Text>
+
+        <AppCard style={styles.card}>
+          <InfoRow
+            icon="card-outline"
+            label={t("subscription.status")}
+            value={subscriptionStatus?.status || "-"}
+          />
+
+          <InfoRow
+            icon="time-outline"
+            label={t("subscription.daysRemaining")}
+            value={String(subscriptionStatus?.daysRemaining ?? "-")}
+          />
+
+          <InfoRow
+            icon="calendar-outline"
+            label={t("subscription.trialEnd")}
+            value={subscriptionStatus?.trialEndDate || "-"}
+          />
+
+          <InfoRow
+            icon="calendar-clear-outline"
+            label={t("subscription.subscriptionEnd")}
+            value={subscriptionStatus?.subscriptionEndDate || "-"}
+            hideBorder
+          />
+
+          {user?.role === "ADMIN" && (
+            <TouchableOpacity
+              style={styles.subscriptionButton}
+              onPress={() => navigation.navigate("Subscription")}
+              activeOpacity={0.85}
+            >
+              <Ionicons name="card-outline" size={20} color="#FFFFFF" />
+              <Text style={styles.subscriptionButtonText}>
+                {t("subscription.viewRenew")}
+              </Text>
+            </TouchableOpacity>
+          )}
         </AppCard>
 
         <Text style={styles.sectionTitle}>Language</Text>
@@ -540,6 +581,23 @@ const styles = StyleSheet.create({
   logoutText: {
     color: "#FFFFFF",
     fontSize: 16,
+    fontWeight: "900",
+    marginLeft: 8,
+  },
+
+  subscriptionButton: {
+    backgroundColor: COLORS.primary,
+    borderRadius: 16,
+    height: 52,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    marginTop: 12,
+  },
+
+  subscriptionButtonText: {
+    color: "#FFFFFF",
+    fontSize: 15,
     fontWeight: "900",
     marginLeft: 8,
   },
