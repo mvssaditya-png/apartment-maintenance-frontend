@@ -53,11 +53,12 @@ export default function OtpScreen({ route, navigation }) {
     } catch (error) {
       console.log("VERIFY OTP ERROR:", error?.response?.data);
 
-      if (error.response?.status === 403) {
-        Alert.alert(t("common.error"), t("otp.invalidOtpTitle"));
-      } else {
-        Alert.alert(t("common.error"), t("otp.serverNotReachable"));
-      }
+      const message =
+        error?.response?.data?.message ||
+        error?.response?.data ||
+        "Unable to verify OTP. Please try again.";
+
+      Alert.alert(t("common.error"), message);
     } finally {
       setLoading(false);
     }
@@ -85,10 +86,12 @@ export default function OtpScreen({ route, navigation }) {
           <Ionicons name="shield-checkmark-outline" size={42} color="#2563EB" />
         </View>
 
-        <Text style={styles.title}>{t("otp.title")}</Text>
+        <Text style={styles.appName}>SmartSociety</Text>
+
+        <Text style={styles.title}>Secure Verification</Text>
 
         <Text style={styles.subtitle}>
-          {t("otp.subtitle")} +91 {phoneNumber}
+          Enter the OTP sent to +91 {phoneNumber}
         </Text>
 
         <View style={styles.card}>
@@ -147,6 +150,10 @@ export default function OtpScreen({ route, navigation }) {
           >
             <Text style={styles.changeNumberText}>{t("otp.changeMobile")}</Text>
           </TouchableOpacity>
+
+          <Text style={styles.secureText}>
+            SmartSociety uses OTP verification to protect apartment user access.
+          </Text>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -185,11 +192,19 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     alignSelf: "center",
-    marginBottom: 22,
+    marginBottom: 18,
+  },
+
+  appName: {
+    fontSize: 30,
+    fontWeight: "900",
+    color: "#2563EB",
+    textAlign: "center",
+    marginBottom: 6,
   },
 
   title: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: "900",
     color: "#111827",
     textAlign: "center",
@@ -283,5 +298,14 @@ const styles = StyleSheet.create({
     color: "#2563EB",
     fontSize: 14,
     fontWeight: "900",
+  },
+
+  secureText: {
+    marginTop: 14,
+    fontSize: 12,
+    color: "#6B7280",
+    textAlign: "center",
+    lineHeight: 18,
+    fontWeight: "600",
   },
 });

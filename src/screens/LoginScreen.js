@@ -61,9 +61,13 @@ export default function LoginScreen({ navigation }) {
           <Ionicons name="business-outline" size={42} color="#2563EB" />
         </View>
 
+        <Text style={styles.appName}>SmartSociety</Text>
+
         <Text style={styles.title}>{t("login.welcomeBack")}</Text>
 
-        <Text style={styles.subtitle}>{t("login.subtitle")}</Text>
+        <Text style={styles.subtitle}>
+          Apartment Management Made Simple
+        </Text>
 
         <View style={styles.card}>
           <Text style={styles.label}>{t("login.mobileNumber")}</Text>
@@ -113,6 +117,20 @@ export default function LoginScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
+  appName: {
+  fontSize: 30,
+  fontWeight: "900",
+  color: "#2563EB",
+  textAlign: "center",
+  marginBottom: 8,
+},
+
+title: {
+  fontSize: 28,
+  fontWeight: "900",
+  color: "#111827",
+  textAlign: "center",
+},
   safeArea: {
     flex: 1,
     backgroundColor: "#F5F7FB",
