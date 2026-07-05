@@ -16,7 +16,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { verifyOtp } from "../api/authApi";
+import { verifyOtp, sendOtp } from "../api/authApi";
 import { AuthContext } from "../context/AuthContext";
 import { t } from "../i18n";
 
@@ -28,6 +28,43 @@ export default function OtpScreen({ route, navigation }) {
 
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [timer, setTimer] = useState(30);
+
+  React.useEffect(() => {
+    if (timer <= 0) return;
+
+    const interval = setInterval(() => {
+      setTimer((prev) => prev - 1);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [timer]);
+
+  const handleResendOtp = async () => {
+    if (timer > 0 || resendLoading) return;
+
+    try {
+      setResendLoading(true);
+      setOtp("");
+
+      await sendOtp(phoneNumber);
+
+      Alert.alert("OTP Sent", "A new OTP has been sent to your mobile number.");
+      setTimer(30);
+    } catch (error) {
+      console.log("RESEND OTP ERROR:", error?.response?.data);
+
+      const message =
+        error?.response?.data?.message ||
+        error?.response?.data ||
+        "Unable to resend OTP. Please try again.";
+
+      Alert.alert(t("common.error"), message);
+    } finally {
+      setResendLoading(false);
+    }
+  };
 
   const handleVerifyOtp = async () => {
     if (otp.length !== 6) {
@@ -141,6 +178,24 @@ export default function OtpScreen({ route, navigation }) {
                 />
               </>
             )}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.resendButton,
+              (timer > 0 || resendLoading) && styles.resendButtonDisabled,
+            ]}
+            onPress={handleResendOtp}
+            disabled={timer > 0 || resendLoading}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.resendText}>
+              {resendLoading
+                ? "Sending OTP..."
+                : timer > 0
+                ? `Resend OTP in ${timer}s`
+                : "Resend OTP"}
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -287,6 +342,22 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "900",
     marginRight: 8,
+  },
+
+  resendButton: {
+    marginTop: 14,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  resendButtonDisabled: {
+    opacity: 0.6,
+  },
+
+  resendText: {
+    color: "#2563EB",
+    fontSize: 14,
+    fontWeight: "900",
   },
 
   changeNumberButton: {
