@@ -16,10 +16,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 
-import {
-  getSites,
-  toggleSite,
-} from "../api/superAdminApi";
+import { getSites, toggleSite } from "../api/superAdminApi";
 
 export default function ManageSitesScreen({ navigation }) {
   const [sites, setSites] = useState([]);
@@ -57,10 +54,7 @@ export default function ManageSitesScreen({ navigation }) {
         ? "Are you sure you want to deactivate this apartment?"
         : "Are you sure you want to activate this apartment?",
       [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
+        { text: "Cancel", style: "cancel" },
         {
           text: active ? "Deactivate" : "Activate",
           style: active ? "destructive" : "default",
@@ -182,9 +176,7 @@ function SiteCard({ item, navigation, onToggle }) {
         <View style={styles.siteTextBlock}>
           <Text style={styles.siteName}>{item.siteName}</Text>
 
-          <Text style={styles.flatText}>
-            {item.totalFlats || 0} flats
-          </Text>
+          <Text style={styles.flatText}>{item.totalFlats || 0} flats</Text>
 
           {(item.city || item.state) && (
             <Text style={styles.locationText}>
@@ -205,8 +197,16 @@ function SiteCard({ item, navigation, onToggle }) {
       <InfoRow icon="person-outline" label="Admin" value={item.adminName || "-"} />
       <InfoRow icon="call-outline" label="Phone" value={item.adminPhone || "-"} />
       <InfoRow icon="mail-outline" label="Email" value={item.adminEmail || "-"} />
-      <InfoRow icon="calendar-outline" label="Trial Ends" value={formatDate(item.trialEndDate)} />
-      <InfoRow icon="card-outline" label="Subscription Ends" value={formatDate(item.subscriptionEndDate)} />
+      <InfoRow
+        icon="calendar-outline"
+        label="Trial Ends"
+        value={formatDate(item.trialEndDate)}
+      />
+      <InfoRow
+        icon="card-outline"
+        label="Subscription Ends"
+        value={formatDate(item.subscriptionEndDate)}
+      />
 
       <View
         style={[
@@ -224,7 +224,7 @@ function SiteCard({ item, navigation, onToggle }) {
         </Text>
       </View>
 
-      <View style={styles.buttonRow}>
+      <View style={styles.actionGrid}>
         <TouchableOpacity
           style={styles.editButton}
           onPress={() => navigation.navigate("CreateSite", { site: item })}
@@ -232,6 +232,20 @@ function SiteCard({ item, navigation, onToggle }) {
         >
           <Ionicons name="create-outline" size={18} color="#2563EB" />
           <Text style={styles.editText}>Edit</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.flatsButton}
+          onPress={() =>
+            navigation.navigate("ManageSiteFlats", {
+              siteId: item.siteId,
+              siteName: item.siteName,
+            })
+          }
+          activeOpacity={0.85}
+        >
+          <Ionicons name="business-outline" size={18} color="#2563EB" />
+          <Text style={styles.flatsButtonText}>Flats</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -243,7 +257,11 @@ function SiteCard({ item, navigation, onToggle }) {
           activeOpacity={0.85}
         >
           <Ionicons
-            name={item.active ? "close-circle-outline" : "checkmark-circle-outline"}
+            name={
+              item.active
+                ? "close-circle-outline"
+                : "checkmark-circle-outline"
+            }
             size={18}
             color="#FFFFFF"
           />
@@ -521,31 +539,55 @@ const styles = StyleSheet.create({
     color: "#6B7280",
   },
 
-  buttonRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+  actionGrid: {
     marginTop: 16,
+    flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
+    columnGap: 8,
   },
 
   editButton: {
+    flex: 1,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: "#EEF5FF",
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
   },
 
   editText: {
     marginLeft: 5,
-    fontSize: 15,
-    fontWeight: "800",
+    fontSize: 14,
+    fontWeight: "900",
     color: "#2563EB",
   },
 
-  statusButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 12,
+  flatsButton: {
+    flex: 1,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: "#EEF5FF",
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
+  },
+
+  flatsButtonText: {
+    marginLeft: 5,
+    color: "#2563EB",
+    fontSize: 14,
+    fontWeight: "900",
+  },
+
+  statusButton: {
+    flex: 1.25,
+    height: 44,
+    borderRadius: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   activateButton: {
@@ -558,7 +600,8 @@ const styles = StyleSheet.create({
 
   statusButtonText: {
     color: "#FFFFFF",
-    fontWeight: "800",
-    marginLeft: 6,
+    fontWeight: "900",
+    marginLeft: 5,
+    fontSize: 13,
   },
 });

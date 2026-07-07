@@ -34,6 +34,7 @@ import SubscriptionPlansScreen from "../screens/SubscriptionPlansScreen";
 import CreatePlanScreen from "../screens/CreatePlanScreen";
 import SubscriptionScreen  from "../screens/SubscriptionScreen";
 import SubscriptionExpiredScreen from "../screens/SubscriptionExpiredScreen";
+import ManageSiteFlatsScreen from "../screens/ManageSiteFlatsScreen";
 
 import { t } from "../i18n";
 
@@ -106,6 +107,11 @@ export default function AppNavigator() {
                 name="CreatePlan"
                 component={CreatePlanScreen}
                 options={headerOptions("Plan Details")}
+              />
+              <Stack.Screen
+                name="ManageSiteFlats"
+                component={ManageSiteFlatsScreen}
+                options={{ headerShown: false }}
               />
             </>
           ) : (

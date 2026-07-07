@@ -16,10 +16,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 
-import {
-  createSite,
-  updateSite,
-} from "../api/superAdminApi";
+import { createSite, updateSite } from "../api/superAdminApi";
 
 export default function CreateSiteScreen({ route, navigation }) {
   const editingSite = route.params?.site || null;
@@ -41,12 +38,6 @@ export default function CreateSiteScreen({ route, navigation }) {
   const [totalFlats, setTotalFlats] = useState(
     editingSite?.totalFlats ? String(editingSite.totalFlats) : ""
   );
-
-  const [adminName, setAdminName] = useState(editingSite?.adminName || "");
-  const [adminPhoneNumber, setAdminPhoneNumber] = useState(
-    editingSite?.adminPhone || editingSite?.adminPhoneNumber || ""
-  );
-  const [adminEmail, setAdminEmail] = useState(editingSite?.adminEmail || "");
 
   const [loading, setLoading] = useState(false);
 
@@ -81,16 +72,6 @@ export default function CreateSiteScreen({ route, navigation }) {
       return;
     }
 
-    if (!adminName.trim()) {
-      Alert.alert("Validation", "Please enter admin name.");
-      return;
-    }
-
-    if (!adminPhoneNumber.trim() || adminPhoneNumber.length !== 10) {
-      Alert.alert("Validation", "Please enter valid 10 digit admin phone.");
-      return;
-    }
-
     const payload = {
       siteName: siteName.trim(),
       address: address.trim(),
@@ -99,9 +80,6 @@ export default function CreateSiteScreen({ route, navigation }) {
       maintenanceAmount: Number(maintenanceAmount),
       openingBalance: openingBalance ? Number(openingBalance) : 0,
       totalFlats: Number(totalFlats),
-      adminName: adminName.trim(),
-      adminPhoneNumber: adminPhoneNumber.trim(),
-      adminEmail: adminEmail.trim(),
     };
 
     try {
@@ -121,7 +99,7 @@ export default function CreateSiteScreen({ route, navigation }) {
 
         Alert.alert(
           "Success",
-          "Apartment created successfully with 3 months free trial.",
+          "Apartment created successfully with 3 months free trial. Now add flats and owner/admin details from Manage Flats.",
           [
             {
               text: "OK",
@@ -165,8 +143,8 @@ export default function CreateSiteScreen({ route, navigation }) {
 
             <Text style={styles.subtitle}>
               {isEditMode
-                ? "Update apartment details and admin information."
-                : "Add a new apartment site and create the first admin user. Free trial will be activated for 3 months."}
+                ? "Update apartment details. Flats and users can be managed separately."
+                : "Add a new apartment site. Free trial will be activated for 3 months. Flats and owner/admin details can be added later from Manage Flats."}
             </Text>
           </View>
 
@@ -231,37 +209,6 @@ export default function CreateSiteScreen({ route, navigation }) {
               }
             />
 
-            <View style={styles.divider} />
-
-            <Text style={styles.sectionTitle}>Apartment Admin</Text>
-
-            <Field
-              label="Admin Name"
-              placeholder="Enter admin name"
-              value={adminName}
-              onChangeText={setAdminName}
-            />
-
-            <Field
-              label="Admin Phone Number"
-              placeholder="10 digit mobile number"
-              keyboardType="phone-pad"
-              maxLength={10}
-              value={adminPhoneNumber}
-              onChangeText={(text) =>
-                setAdminPhoneNumber(text.replace(/[^0-9]/g, ""))
-              }
-            />
-
-            <Field
-              label="Admin Email"
-              placeholder="Enter admin email"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              value={adminEmail}
-              onChangeText={setAdminEmail}
-            />
-
             {!isEditMode && (
               <View style={styles.trialBox}>
                 <Ionicons name="gift-outline" size={23} color="#2563EB" />
@@ -270,6 +217,7 @@ export default function CreateSiteScreen({ route, navigation }) {
                   <Text style={styles.trialTitle}>3 Months Free Trial</Text>
                   <Text style={styles.trialText}>
                     The apartment will be active immediately after creation.
+                    Add flats and owner/admin details from Manage Flats.
                   </Text>
                 </View>
               </View>
@@ -417,12 +365,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 
-  divider: {
-    height: 1,
-    backgroundColor: "#F3F4F6",
-    marginVertical: 18,
-  },
-
   trialBox: {
     backgroundColor: "#EEF4FF",
     borderRadius: 18,
@@ -430,6 +372,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 18,
+    marginTop: 4,
   },
 
   trialTitle: {

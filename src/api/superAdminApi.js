@@ -26,3 +26,15 @@ export const updateSite = (siteId, payload) =>
 
 export const toggleSite = (siteId) =>
   API.patch(`/super-admin/sites/${siteId}/toggle`);
+
+export const getSiteFlats = (siteId) =>
+  API.get(`/super-admin/sites/${siteId}/flats`);
+
+export const addSiteFlat = (siteId, data) =>
+  API.post(`/super-admin/sites/${siteId}/flats`, data);
+
+export const updateSiteFlat = (flatId, data) =>
+  API.put(`/super-admin/flats/${flatId}`, data);
+
+export const toggleSiteFlat = (flatId) =>
+  API.patch(`/super-admin/flats/${flatId}/toggle`);
