@@ -14,16 +14,18 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
+import RazorpayCheckout from "react-native-razorpay";
 
 import {
   getSubscriptionStatus,
   getSubscriptionPlans,
   createSubscriptionOrder,
-  testActivateSubscription,
+  verifySubscriptionPayment,
 } from "../api/subscriptionApi";
 
 import { AuthContext } from "../context/AuthContext";
 import { t } from "../i18n";
+
 export default function SubscriptionScreen({ navigation }) {
   const { refreshSubscriptionStatus } = useContext(AuthContext);
 
@@ -34,9 +36,7 @@ export default function SubscriptionScreen({ navigation }) {
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-
-  const [creatingOrder, setCreatingOrder] = useState(false);
-  const [activating, setActivating] = useState(false);
+  const [processingPlanId, setProcessingPlanId] = useState(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -54,79 +54,168 @@ export default function SubscriptionScreen({ navigation }) {
       setStatus(statusResponse.data);
       setPlans(plansResponse.data || []);
     } catch (error) {
-      console.log("SUBSCRIPTION LOAD ERROR:", error?.response?.data || error);
+      console.log(
+        "SUBSCRIPTION LOAD ERROR:",
+        error?.response?.data || error
+      );
+
+      Alert.alert(
+        "Error",
+        getErrorMessage(
+          error,
+          "Unable to load subscription information."
+        )
+      );
     } finally {
       setLoading(false);
     }
   };
 
   const onRefresh = async () => {
-    setRefreshing(true);
-    setCreatedOrder(null);
-    setSelectedPlan(null);
-    await loadData();
-    setRefreshing(false);
-  };
-
-  const subscribe = async (plan) => {
     try {
-      setCreatingOrder(true);
-      setSelectedPlan(plan);
+      setRefreshing(true);
       setCreatedOrder(null);
-
-      const response = await createSubscriptionOrder({
-        planId: plan.planId,
-      });
-
-      setCreatedOrder(response.data);
-
-      Alert.alert(
-        t("subscription.orderCreated"),
-        t("subscription.orderCreatedMessage")
-      );
-    } catch (error) {
-      console.log("CREATE ORDER ERROR:", error?.response?.data || error);
-
-      Alert.alert("Error", "Unable to create subscription order.");
+      setSelectedPlan(null);
+      await loadData();
     } finally {
-      setCreatingOrder(false);
+      setRefreshing(false);
     }
   };
 
-  const testActivate = async () => {
-    if (!createdOrder?.razorpayOrderId) {
-      Alert.alert("Error", "Please create an order first.");
+  const subscribe = async (plan) => {
+    if (processingPlanId) {
       return;
     }
 
     try {
-      setActivating(true);
+      setProcessingPlanId(plan.planId);
+      setSelectedPlan(plan);
+      setCreatedOrder(null);
 
-      await testActivateSubscription({
-        razorpayOrderId: createdOrder.razorpayOrderId,
-        razorpayPaymentId: "TEST_PAYMENT",
-        razorpaySignature: "TEST_SIGNATURE",
+      /*
+       * Step 1:
+       * Create Razorpay order through backend.
+       */
+      const orderResponse = await createSubscriptionOrder({
+        planId: plan.planId,
       });
 
+      const order = orderResponse.data;
+
+      if (!order?.razorpayOrderId) {
+        throw new Error("Razorpay order ID was not returned.");
+      }
+
+      if (!order?.keyId) {
+        throw new Error("Razorpay Key ID was not returned.");
+      }
+
+      if (!order?.amountInPaise) {
+        throw new Error("Razorpay order amount was not returned.");
+      }
+
+      setCreatedOrder(order);
+
+      /*
+       * Step 2:
+       * Open native Razorpay Checkout.
+       *
+       * Amount must be supplied in the smallest currency unit.
+       * For INR, the backend already returns amountInPaise.
+       */
+      const checkoutOptions = {
+        key: order.keyId,
+        order_id: order.razorpayOrderId,
+        amount: String(order.amountInPaise),
+        currency: order.currency || "INR",
+
+        name: "SmartSociety",
+        description: `${plan.durationMonths} Month Apartment Subscription`,
+
+        theme: {
+          color: "#2563EB",
+        },
+
+        notes: {
+          subscriptionId: String(order.subscriptionId || ""),
+          planId: String(order.planId || plan.planId),
+        },
+      };
+
+      const paymentResult =
+        await RazorpayCheckout.open(checkoutOptions);
+
+      if (
+        !paymentResult?.razorpay_order_id ||
+        !paymentResult?.razorpay_payment_id ||
+        !paymentResult?.razorpay_signature
+      ) {
+        throw new Error(
+          "Incomplete payment response received from Razorpay."
+        );
+      }
+
+      /*
+       * Step 3:
+       * Send the Razorpay result to backend for signature verification.
+       */
+      const verifyResponse =
+        await verifySubscriptionPayment({
+          razorpayOrderId:
+            paymentResult.razorpay_order_id,
+
+          razorpayPaymentId:
+            paymentResult.razorpay_payment_id,
+
+          razorpaySignature:
+            paymentResult.razorpay_signature,
+        });
+
+      /*
+       * Step 4:
+       * Refresh subscription status.
+       */
       await refreshSubscriptionStatus();
       await loadData();
 
+      setCreatedOrder(null);
+      setSelectedPlan(null);
+
       Alert.alert(
-        "Success",
-        "Subscription activated successfully.",
+        "Payment Successful",
+        verifyResponse?.data?.message ||
+          "Your SmartSociety subscription has been activated successfully.",
         [
           {
             text: "OK",
-            onPress: () => navigation.navigate("Dashboard"),
+            onPress: () => {
+              navigation.navigate("Dashboard");
+            },
           },
         ]
       );
     } catch (error) {
-      console.log("TEST ACTIVATE ERROR:", error?.response?.data || error);
+      console.log(
+        "RAZORPAY SUBSCRIPTION ERROR:",
+        error?.response?.data || error
+      );
 
-      Alert.alert("Error", "Unable to activate subscription.");
+      /*
+       * Razorpay native checkout can reject its promise when:
+       * - user cancels checkout
+       * - payment fails
+       * - network fails
+       *
+       * Backend Axios errors are handled using response.data.
+       */
+      const message = getErrorMessage(
+        error,
+        "The payment was cancelled or could not be completed."
+      );
+
+      Alert.alert("Payment Not Completed", message);
     } finally {
-      setActivating(false);
+      setProcessingPlanId(null);
     }
   };
 
@@ -144,28 +233,43 @@ export default function SubscriptionScreen({ navigation }) {
     <SafeAreaView style={styles.safeArea} edges={["bottom"]}>
       <ScrollView
         contentContainerStyle={styles.container}
+        showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
             colors={["#2563EB"]}
+            tintColor="#2563EB"
           />
         }
       >
         <View style={styles.headerCard}>
           <View style={styles.headerIconBox}>
-            <Ionicons name="card-outline" size={32} color="#FFFFFF" />
+            <Ionicons
+              name="card-outline"
+              size={32}
+              color="#FFFFFF"
+            />
           </View>
 
           <Text style={styles.siteName}>
             {status?.siteName || "Apartment Subscription"}
           </Text>
 
-          <View style={[styles.statusBadge, getStatusStyle(status?.status)]}>
-            <Text style={styles.statusText}>{status?.status || "-"}</Text>
+          <View
+            style={[
+              styles.statusBadge,
+              getStatusStyle(status?.status),
+            ]}
+          >
+            <Text style={styles.statusText}>
+              {status?.status || "-"}
+            </Text>
           </View>
 
-          <Text style={styles.message}>{status?.message}</Text>
+          <Text style={styles.message}>
+            {status?.message}
+          </Text>
         </View>
 
         <View style={styles.infoCard}>
@@ -184,13 +288,32 @@ export default function SubscriptionScreen({ navigation }) {
           <InfoRow
             icon="card-outline"
             label={t("subscription.subscriptionEnd")}
-            value={formatDate(status?.subscriptionEndDate)}
+            value={formatDate(
+              status?.subscriptionEndDate
+            )}
           />
         </View>
 
-        {createdOrder && (
+        {createdOrder && processingPlanId && (
           <View style={styles.orderCard}>
-            <Text style={styles.orderTitle}>Order Created</Text>
+            <View style={styles.orderHeader}>
+              <View style={styles.orderIconBox}>
+                <ActivityIndicator
+                  size="small"
+                  color="#2563EB"
+                />
+              </View>
+
+              <View style={styles.orderHeaderText}>
+                <Text style={styles.orderTitle}>
+                  Processing Payment
+                </Text>
+
+                <Text style={styles.orderSubtitle}>
+                  Complete the payment in Razorpay Checkout.
+                </Text>
+              </View>
+            </View>
 
             <Text style={styles.orderText}>
               Plan: {selectedPlan?.durationMonths} Months
@@ -200,76 +323,102 @@ export default function SubscriptionScreen({ navigation }) {
               Amount: ₹{createdOrder.amount}
             </Text>
 
-            <Text style={styles.orderTextSmall}>
-              Order ID: {createdOrder.razorpayOrderId}
-            </Text>
-
-            <TouchableOpacity
-              style={styles.testButton}
-              onPress={testActivate}
-              disabled={activating}
-              activeOpacity={0.85}
+            <Text
+              style={styles.orderTextSmall}
+              numberOfLines={1}
             >
-              {activating ? (
-                <ActivityIndicator color="#FFFFFF" />
-              ) : (
-                <Text style={styles.testButtonText}>
-                  {t("subscription.testActivate")}
-                </Text>
-              )}
-            </TouchableOpacity>
-
-            <Text style={styles.testNote}>
-              {t("subscription.testNote")}
+              Order ID: {createdOrder.razorpayOrderId}
             </Text>
           </View>
         )}
 
-        <Text style={styles.sectionTitle}>{t("subscription.availablePlans")}</Text>
+        <Text style={styles.sectionTitle}>
+          {t("subscription.availablePlans")}
+        </Text>
 
         {plans.length === 0 ? (
           <View style={styles.emptyCard}>
-            <Ionicons name="card-outline" size={36} color="#9CA3AF" />
-            <Text style={styles.emptyText}>No plans available</Text>
+            <Ionicons
+              name="card-outline"
+              size={36}
+              color="#9CA3AF"
+            />
+
+            <Text style={styles.emptyText}>
+              No plans available
+            </Text>
           </View>
         ) : (
-          plans.map((plan) => (
-            <TouchableOpacity
-              key={plan.planId}
-              style={[
-                styles.planCard,
-                selectedPlan?.planId === plan.planId && styles.planCardActive,
-              ]}
-              onPress={() => subscribe(plan)}
-              activeOpacity={0.85}
-              disabled={creatingOrder}
-            >
-              <View style={styles.planLeft}>
-                <View style={styles.planIconBox}>
-                  <Ionicons name="calendar-outline" size={22} color="#2563EB" />
+          plans.map((plan) => {
+            const isProcessing =
+              processingPlanId === plan.planId;
+
+            const isAnotherPlanProcessing =
+              processingPlanId &&
+              processingPlanId !== plan.planId;
+
+            return (
+              <TouchableOpacity
+                key={plan.planId}
+                style={[
+                  styles.planCard,
+                  selectedPlan?.planId === plan.planId &&
+                    styles.planCardActive,
+                  isAnotherPlanProcessing &&
+                    styles.planCardDisabled,
+                ]}
+                onPress={() => subscribe(plan)}
+                activeOpacity={0.85}
+                disabled={Boolean(processingPlanId)}
+              >
+                <View style={styles.planLeft}>
+                  <View style={styles.planIconBox}>
+                    <Ionicons
+                      name="calendar-outline"
+                      size={22}
+                      color="#2563EB"
+                    />
+                  </View>
+
+                  <View style={styles.planTextBlock}>
+                    <Text style={styles.planTitle}>
+                      {plan.durationMonths} Months
+                    </Text>
+
+                    <Text style={styles.planRange}>
+                      Flats {plan.minFlats}
+                      {plan.maxFlats
+                        ? ` - ${plan.maxFlats}`
+                        : "+"}
+                    </Text>
+                  </View>
                 </View>
 
-                <View>
-                  <Text style={styles.planTitle}>{plan.durationMonths} Months</Text>
-
-                  <Text style={styles.planRange}>
-                    Flats {plan.minFlats}
-                    {plan.maxFlats ? ` - ${plan.maxFlats}` : "+"}
+                <View style={styles.planRight}>
+                  <Text style={styles.amount}>
+                    ₹{plan.amount}
                   </Text>
+
+                  {isProcessing ? (
+                    <View style={styles.processingRow}>
+                      <ActivityIndicator
+                        size="small"
+                        color="#2563EB"
+                      />
+
+                      <Text style={styles.processingText}>
+                        Opening...
+                      </Text>
+                    </View>
+                  ) : (
+                    <Text style={styles.buyNow}>
+                      {t("subscription.subscribe")} →
+                    </Text>
+                  )}
                 </View>
-              </View>
-
-              <View>
-                <Text style={styles.amount}>₹{plan.amount}</Text>
-
-                <Text style={styles.buyNow}>
-                  {creatingOrder && selectedPlan?.planId === plan.planId
-                    ? t("subscription.creating")
-                    : `${t("subscription.subscribe")} →`}
-                </Text>
-              </View>
-            </TouchableOpacity>
-          ))
+              </TouchableOpacity>
+            );
+          })
         )}
       </ScrollView>
     </SafeAreaView>
@@ -279,11 +428,19 @@ export default function SubscriptionScreen({ navigation }) {
 function InfoRow({ icon, label, value }) {
   return (
     <View style={styles.infoRow}>
-      <Ionicons name={icon} size={18} color="#6B7280" />
+      <Ionicons
+        name={icon}
+        size={18}
+        color="#6B7280"
+      />
 
-      <Text style={styles.infoLabel}>{label}</Text>
+      <Text style={styles.infoLabel}>
+        {label}
+      </Text>
 
-      <Text style={styles.infoValue}>{value}</Text>
+      <Text style={styles.infoValue}>
+        {value}
+      </Text>
     </View>
   );
 }
@@ -291,31 +448,82 @@ function InfoRow({ icon, label, value }) {
 function getStatusStyle(status) {
   switch (status) {
     case "ACTIVE":
-      return { backgroundColor: "#DCFCE7" };
+      return {
+        backgroundColor: "#DCFCE7",
+      };
 
     case "TRIAL":
-      return { backgroundColor: "#FEF3C7" };
+      return {
+        backgroundColor: "#FEF3C7",
+      };
 
     case "EXPIRED":
-      return { backgroundColor: "#FEE2E2" };
+      return {
+        backgroundColor: "#FEE2E2",
+      };
 
     default:
-      return { backgroundColor: "#F3F4F6" };
+      return {
+        backgroundColor: "#F3F4F6",
+      };
   }
 }
 
 function formatDate(value) {
-  if (!value) return "-";
+  if (!value) {
+    return "-";
+  }
 
   const date = new Date(value);
 
-  if (isNaN(date.getTime())) return value;
+  if (isNaN(date.getTime())) {
+    return value;
+  }
 
   return date.toLocaleDateString("en-IN", {
     day: "2-digit",
     month: "short",
     year: "numeric",
   });
+}
+
+function getErrorMessage(error, fallbackMessage) {
+  const backendData = error?.response?.data;
+
+  if (typeof backendData === "string" && backendData.trim()) {
+    return backendData;
+  }
+
+  if (
+    typeof backendData?.message === "string" &&
+    backendData.message.trim()
+  ) {
+    return backendData.message;
+  }
+
+  if (
+    typeof error?.description === "string" &&
+    error.description.trim()
+  ) {
+    return error.description;
+  }
+
+  if (
+    typeof error?.error?.description === "string" &&
+    error.error.description.trim()
+  ) {
+    return error.error.description;
+  }
+
+  if (
+    typeof error?.message === "string" &&
+    error.message.trim() &&
+    error.message !== "Network Error"
+  ) {
+    return error.message;
+  }
+
+  return fallbackMessage;
 }
 
 const styles = StyleSheet.create({
@@ -412,11 +620,37 @@ const styles = StyleSheet.create({
     borderColor: "#BFDBFE",
   },
 
+  orderHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 14,
+  },
+
+  orderIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 15,
+    backgroundColor: "#EEF4FF",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  orderHeaderText: {
+    flex: 1,
+    marginLeft: 12,
+  },
+
   orderTitle: {
     fontSize: 18,
     fontWeight: "900",
     color: "#111827",
-    marginBottom: 8,
+  },
+
+  orderSubtitle: {
+    fontSize: 13,
+    color: "#6B7280",
+    fontWeight: "600",
+    marginTop: 3,
   },
 
   orderText: {
@@ -431,29 +665,6 @@ const styles = StyleSheet.create({
     color: "#6B7280",
     fontWeight: "600",
     marginTop: 8,
-  },
-
-  testButton: {
-    marginTop: 16,
-    backgroundColor: "#2563EB",
-    borderRadius: 16,
-    height: 52,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  testButtonText: {
-    color: "#FFFFFF",
-    fontSize: 15,
-    fontWeight: "900",
-  },
-
-  testNote: {
-    marginTop: 10,
-    fontSize: 12,
-    color: "#6B7280",
-    fontWeight: "600",
-    lineHeight: 18,
   },
 
   sectionTitle: {
@@ -491,6 +702,10 @@ const styles = StyleSheet.create({
     borderColor: "#2563EB",
   },
 
+  planCardDisabled: {
+    opacity: 0.55,
+  },
+
   planLeft: {
     flexDirection: "row",
     alignItems: "center",
@@ -508,6 +723,10 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
 
+  planTextBlock: {
+    flex: 1,
+  },
+
   planTitle: {
     fontSize: 18,
     fontWeight: "900",
@@ -518,6 +737,10 @@ const styles = StyleSheet.create({
     marginTop: 4,
     color: "#6B7280",
     fontWeight: "600",
+  },
+
+  planRight: {
+    alignItems: "flex-end",
   },
 
   amount: {
@@ -532,5 +755,18 @@ const styles = StyleSheet.create({
     color: "#2563EB",
     fontWeight: "800",
     textAlign: "right",
+  },
+
+  processingRow: {
+    marginTop: 6,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  processingText: {
+    marginLeft: 6,
+    color: "#2563EB",
+    fontWeight: "800",
+    fontSize: 12,
   },
 });

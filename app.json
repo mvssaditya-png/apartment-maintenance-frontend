@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "apartment-app",
-    "slug": "apartment-app",
+    "name": "SmartSociety",
+    "slug": "smart-society",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -13,6 +13,7 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
+      "bundleIdentifier": "com.mbrsoftwaresolutions.smartsociety",
       "supportsTablet": true,
       "infoPlist": {
         "NSAppTransportSecurity": {
@@ -22,6 +23,7 @@
       }
     },
     "android": {
+      "package": "com.mbrsoftwaresolutions.smartsociety",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"

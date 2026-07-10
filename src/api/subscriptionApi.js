@@ -11,6 +11,3 @@ export const createSubscriptionOrder = (payload) =>
 
 export const verifySubscriptionPayment = (payload) =>
   API.post("/subscriptions/verify-payment", payload);
-
-export const testActivateSubscription = (payload) =>
-  API.post("/subscriptions/test-activate", payload);
