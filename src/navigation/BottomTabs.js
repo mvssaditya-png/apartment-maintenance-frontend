@@ -121,8 +121,8 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 14,
     right: 14,
-    bottom: Platform.OS === "ios" ? 10 : 8,
-    height: 78,
+    bottom: Platform.OS === "ios" ? 2 : 8,
+    height: 74,
     backgroundColor: COLORS.white,
     borderRadius: 24,
     borderTopWidth: 0,
@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
     },
     elevation: 6,
     paddingTop: 8,
-    paddingBottom: Platform.OS === "ios" ? 12 : 8,
+    paddingBottom: Platform.OS === "ios" ? 6 : 8,
   },
 
   tabItem: {
